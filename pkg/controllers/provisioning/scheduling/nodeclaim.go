@@ -113,25 +113,16 @@ func (n *NodeClaim) Add(pod *v1.Pod) error {
 	}
 	PrintJSON(temp, "Nikhil filtered InstanceType")
 	PrintJSON(len(temp), "Nikhil filtered InstanceType length")
-	nodeClaimRequirements.Get("node.kubernetes.io/instance-type").MinValues = lo.ToPtr(3)
-	nodeClaimRequirements.Get("karpenter.k8s.aws/instance-family").MinValues = lo.ToPtr(3)
+	//nodeClaimRequirements.Get("node.kubernetes.io/instance-type").MinValues = lo.ToPtr(3)
+	//nodeClaimRequirements.Get("karpenter.k8s.aws/instance-family").MinValues = lo.ToPtr(3)
 	PrintJSON(nodeClaimRequirements, "Nikhil requirements")
-	PrintJSON(filtered.requirementsWithMinValues, "Nikhil requirementsWithMinValues")
+	PrintJSON(filtered.cumulativeMinRequirementsFromInstanceTypes, "Nikhil requirementsWithMinValues")
 
-	for key, value := range filtered.requirementsWithMinValues {
-		PrintJSON(key, "Nikhil key")
-		PrintJSON(len(value), "Nikhil length value")
-		PrintJSON(lo.FromPtr(nodeClaimRequirements.Get(key).MinValues), "Nikhil req length value")
+	for key, value := range filtered.cumulativeMinRequirementsFromInstanceTypes {
 		if len(value) < lo.FromPtr(nodeClaimRequirements.Get(key).MinValues) {
-			PrintJSON(key, "Nikhil min not met for this")
-			return fmt.Errorf("min requirement for %s is not satisfied", key)
+			return fmt.Errorf("min requirement not met for %s", key)
 		}
 	}
-	// compare with the requirements
-	//if len(filtered.requirementsWithMinValues["karpenter.k8s.aws/instance-family"]) < 1 {
-	//	PrintJSON("yes", "Nikhil got it")
-	//	return fmt.Errorf("min instance type not satisfied")
-	//}
 
 	if len(filtered.remaining) == 0 {
 		// log the total resources being requested (daemonset + the pod)
@@ -194,9 +185,8 @@ type filterResults struct {
 	// requirementsAndOffering indicates if a single instance type met the scheduling requirements and was a required offering
 	requirementsAndOffering bool
 	// fitsAndOffering indicates if a single instance type had enough resources and was a required offering
-	fitsAndOffering bool
-	// TODO: instead do minParameters [key][values]
-	requirementsWithMinValues map[string]sets.Set[string]
+	fitsAndOffering                            bool
+	cumulativeMinRequirementsFromInstanceTypes map[string]sets.Set[string]
 
 	requests v1.ResourceList
 }
@@ -276,7 +266,7 @@ func filterInstanceTypesByRequirements(instanceTypes []*cloudprovider.InstanceTy
 		requirementsAndOffering: false,
 		fitsAndOffering:         false,
 	}
-	requirementsWithMinValues := make(map[string]sets.Set[string])
+	cumulativeMinRequirementsFromInstanceTypes := make(map[string]sets.Set[string])
 	for _, it := range instanceTypes {
 		// the tradeoff to not short circuiting on the filtering is that we can report much better error messages
 		// about why scheduling failed
@@ -298,18 +288,17 @@ func filterInstanceTypesByRequirements(instanceTypes []*cloudprovider.InstanceTy
 		// any errors.
 		if itCompat && itFits && itHasOffering {
 			results.remaining = append(results.remaining, it)
-			for _, req := range it.Requirements {
-				value := 2
-				req.MinValues = &value
+			for _, req := range requirements {
 				if req.MinValues != nil {
-					existingValues := requirementsWithMinValues[req.Key]
-					requirementsWithMinValues[req.Key] = existingValues.Union(it.Requirements.Get(req.Key).Values)
+					if _, ok := cumulativeMinRequirementsFromInstanceTypes[req.Key]; !ok {
+						cumulativeMinRequirementsFromInstanceTypes[req.Key] = sets.Set[string]{}
+					}
+					cumulativeMinRequirementsFromInstanceTypes[req.Key] = cumulativeMinRequirementsFromInstanceTypes[req.Key].Insert(it.Requirements.Get(req.Key).ValuesJ()...)
 				}
 			}
-			//instanceFamilies[it.Requirements.Get("karpenter.k8s.aws/instance-family").Key] = struct{}{}
 		}
 	}
-	results.requirementsWithMinValues = requirementsWithMinValues
+	results.cumulativeMinRequirementsFromInstanceTypes = cumulativeMinRequirementsFromInstanceTypes
 	return results
 }
 

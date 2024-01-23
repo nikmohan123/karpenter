@@ -321,17 +321,24 @@ func hasDoNotDisruptPod(c *Candidate) (*v1.Pod, bool) {
 	})
 }
 
-func fetchMinimumRequirementsFromInstanceTypeOptions(instanceTypeOptions []*cloudprovider.InstanceType) map[string]sets.Set[string] {
-	requirementsWithMinValues := make(map[string]sets.Set[string])
+func fetchCumulativeMinimumRequirementsFromInstanceTypeOptions(instanceTypeOptions []*cloudprovider.InstanceType, requirements scheduling.Requirements) map[string]sets.Set[string] {
+	// Key -> requirement key asking for MinValues
+	// value -> cumulative set of values for the key from all the instanceTypes
+	cumulativeMinRequirementsFromInstanceTypes := make(map[string]sets.Set[string])
+
+	// For all the InstanceTypeOptions
 	for _, it := range instanceTypeOptions {
-		for _, req := range it.Requirements {
-			value := 2
-			req.MinValues = &value
+		// Iterate over the scheduling requirements
+		for _, req := range requirements {
+			// Check if the scheduling requirement asks for MinValues
 			if req.MinValues != nil {
-				existingValues := requirementsWithMinValues[req.Key]
-				requirementsWithMinValues[req.Key] = existingValues.Union(it.Requirements.Get(req.Key).Values)
+				if _, ok := cumulativeMinRequirementsFromInstanceTypes[req.Key]; !ok {
+					cumulativeMinRequirementsFromInstanceTypes[req.Key] = sets.Set[string]{}
+				}
+				cumulativeMinRequirementsFromInstanceTypes[req.Key] =
+					cumulativeMinRequirementsFromInstanceTypes[req.Key].Insert(it.Requirements.Get(req.Key).ValuesJ()...)
 			}
 		}
 	}
-	return requirementsWithMinValues
+	return cumulativeMinRequirementsFromInstanceTypes
 }

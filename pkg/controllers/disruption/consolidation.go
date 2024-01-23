@@ -157,10 +157,12 @@ func (c *consolidation) computeConsolidation(ctx context.Context, candidates ...
 		return Command{}, nil
 	}
 
-	for key, value := range fetchMinimumRequirementsFromInstanceTypeOptions(results.NewNodeClaims[0].InstanceTypeOptions) {
-		// Return if minvalues are not honored
+	// Key -> requirement key supporting MinValues
+	// value -> cumulative set of values for the key from all the instanceTypes
+	for key, value := range fetchCumulativeMinimumRequirementsFromInstanceTypeOptions(results.NewNodeClaims[0].InstanceTypeOptions, results.NewNodeClaims[0].Requirements) {
+		// Return if any of the minvalues of requirement is not honored
 		if len(value) < lo.FromPtr(results.NewNodeClaims[0].Requirements.Get(key).MinValues) {
-			return Command{}, fmt.Errorf("min requirement not met, %w", err)
+			return Command{}, fmt.Errorf("min requirement not met for %s", key)
 		}
 	}
 
