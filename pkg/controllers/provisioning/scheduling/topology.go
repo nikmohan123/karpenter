@@ -129,11 +129,11 @@ func (t *Topology) Record(p *v1.Pod, requirements scheduling.Requirements, compa
 			domains := requirements.Get(tc.Key)
 			if tc.Type == TopologyTypePodAntiAffinity {
 				// for anti-affinity topologies we need to block out all possible domains that the pod could land in
-				tc.Record(domains.Values()...)
+				tc.Record(domains.ValuesJ()...)
 			} else {
 				// but for affinity & topology spread, we can only record the domain if we know the specific domain we land in
 				if domains.Len() == 1 {
-					tc.Record(domains.Values()[0])
+					tc.Record(domains.ValuesJ()[0])
 				}
 			}
 		}
@@ -142,7 +142,7 @@ func (t *Topology) Record(p *v1.Pod, requirements scheduling.Requirements, compa
 	// requirements haven't collapsed to a single value.
 	for _, tc := range t.inverseTopologies {
 		if tc.IsOwnedBy(p.UID) {
-			tc.Record(requirements.Get(tc.Key).Values()...)
+			tc.Record(requirements.Get(tc.Key).ValuesJ()...)
 		}
 	}
 }

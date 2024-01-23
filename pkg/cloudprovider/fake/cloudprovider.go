@@ -111,7 +111,7 @@ func (c *CloudProvider) Create(ctx context.Context, nodeClaim *v1beta1.NodeClaim
 	labels := map[string]string{}
 	for key, requirement := range instanceType.Requirements {
 		if requirement.Operator() == v1.NodeSelectorOpIn {
-			labels[key] = requirement.Values()[0]
+			labels[key] = requirement.ValuesJ()[0]
 		}
 	}
 	// Find Offering

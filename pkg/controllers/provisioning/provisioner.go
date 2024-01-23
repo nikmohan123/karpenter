@@ -18,6 +18,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -132,6 +133,9 @@ func (p *Provisioner) Reconcile(ctx context.Context, _ reconcile.Request) (resul
 	if len(results.NewNodeClaims) == 0 {
 		return reconcile.Result{}, nil
 	}
+
+	PrintJSON(len(results.NewNodeClaims), ctx, "Nikhil NewNodeClaims length")
+
 	_, err = p.CreateNodeClaims(ctx, results.NewNodeClaims, WithReason(metrics.ProvisioningReason), RecordPodNomination)
 	return reconcile.Result{}, err
 }
@@ -151,6 +155,11 @@ func (p *Provisioner) CreateNodeClaims(ctx context.Context, nodeClaims []*schedu
 		}
 	})
 	return nodeClaimNames, multierr.Combine(errs...)
+}
+
+func PrintJSON(obj interface{}, ctx context.Context, message string) {
+	bytes, _ := json.Marshal(obj)
+	logging.FromContext(ctx).Infof(message + " :Nikhil: " + string(bytes))
 }
 
 func (p *Provisioner) GetPendingPods(ctx context.Context) ([]*v1.Pod, error) {
@@ -260,9 +269,9 @@ func (p *Provisioner) NewScheduler(ctx context.Context, pods []*v1.Pod, stateNod
 				// This resulted in a lot of memory pressure on the heap and poor performance
 				// https://github.com/aws/karpenter/issues/3565
 				if domains[key] == nil {
-					domains[key] = sets.New(requirement.Values()...)
+					domains[key] = sets.New(requirement.ValuesJ()...)
 				} else {
-					domains[key].Insert(requirement.Values()...)
+					domains[key].Insert(requirement.ValuesJ()...)
 				}
 			}
 		}
@@ -273,9 +282,9 @@ func (p *Provisioner) NewScheduler(ctx context.Context, pods []*v1.Pod, stateNod
 			if requirement.Operator() == v1.NodeSelectorOpIn {
 				// The following is a performance optimisation, for the explanation see the comment above
 				if domains[key] == nil {
-					domains[key] = sets.New(requirement.Values()...)
+					domains[key] = sets.New(requirement.ValuesJ()...)
 				} else {
-					domains[key].Insert(requirement.Values()...)
+					domains[key].Insert(requirement.ValuesJ()...)
 				}
 			}
 		}

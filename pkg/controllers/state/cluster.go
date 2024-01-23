@@ -324,7 +324,7 @@ func (c *Cluster) ConsolidationState() time.Time {
 	c.clusterStateMu.RUnlock()
 
 	// time.Time uses a monotonic clock for these comparisons
-	if c.clock.Since(state) < time.Minute*5 {
+	if c.clock.Since(state) < time.Minute*1 {
 		return state
 	}
 

@@ -32,10 +32,11 @@ import (
 // Requirement is an efficient represenatation of v1.NodeSelectorRequirement
 type Requirement struct {
 	Key         string
-	complement  bool
-	values      sets.Set[string]
-	greaterThan *int
-	lessThan    *int
+	Complement  bool
+	Values      sets.Set[string]
+	GreaterThan *int
+	LessThan    *int
+	MinValues   *int
 }
 
 func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...string) *Requirement {
@@ -51,54 +52,55 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 		}
 		return &Requirement{
 			Key:        key,
-			values:     s,
-			complement: false,
+			Values:     s,
+			Complement: false,
+			MinValues:  lo.ToPtr(3),
 		}
 	}
 
 	r := &Requirement{
 		Key:        key,
-		values:     sets.New[string](),
-		complement: true,
+		Values:     sets.New[string](),
+		Complement: true,
 	}
 	if operator == v1.NodeSelectorOpIn || operator == v1.NodeSelectorOpDoesNotExist {
-		r.complement = false
+		r.Complement = false
 	}
 	if operator == v1.NodeSelectorOpIn || operator == v1.NodeSelectorOpNotIn {
-		r.values.Insert(values...)
+		r.Values.Insert(values...)
 	}
 	if operator == v1.NodeSelectorOpGt {
 		value, _ := strconv.Atoi(values[0]) // prevalidated
-		r.greaterThan = &value
+		r.GreaterThan = &value
 	}
 	if operator == v1.NodeSelectorOpLt {
 		value, _ := strconv.Atoi(values[0]) // prevalidated
-		r.lessThan = &value
+		r.LessThan = &value
 	}
 	return r
 }
 
 func (r *Requirement) NodeSelectorRequirement() v1.NodeSelectorRequirement {
 	switch {
-	case r.greaterThan != nil:
+	case r.GreaterThan != nil:
 		return v1.NodeSelectorRequirement{
 			Key:      r.Key,
 			Operator: v1.NodeSelectorOpGt,
-			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.greaterThan)), 10)},
+			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.GreaterThan)), 10)},
 		}
-	case r.lessThan != nil:
+	case r.LessThan != nil:
 		return v1.NodeSelectorRequirement{
 			Key:      r.Key,
 			Operator: v1.NodeSelectorOpLt,
-			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.lessThan)), 10)},
+			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.LessThan)), 10)},
 		}
-	case r.complement:
+	case r.Complement:
 		switch {
-		case len(r.values) > 0:
+		case len(r.Values) > 0:
 			return v1.NodeSelectorRequirement{
 				Key:      r.Key,
 				Operator: v1.NodeSelectorOpNotIn,
-				Values:   sets.List(r.values),
+				Values:   sets.List(r.Values),
 			}
 		default:
 			return v1.NodeSelectorRequirement{
@@ -108,11 +110,11 @@ func (r *Requirement) NodeSelectorRequirement() v1.NodeSelectorRequirement {
 		}
 	default:
 		switch {
-		case len(r.values) > 0:
+		case len(r.Values) > 0:
 			return v1.NodeSelectorRequirement{
 				Key:      r.Key,
 				Operator: v1.NodeSelectorOpIn,
-				Values:   sets.List(r.values),
+				Values:   sets.List(r.Values),
 			}
 		default:
 			return v1.NodeSelectorRequirement{
@@ -127,25 +129,25 @@ func (r *Requirement) NodeSelectorRequirement() v1.NodeSelectorRequirement {
 // nolint:gocyclo
 func (r *Requirement) Intersection(requirement *Requirement) *Requirement {
 	// Complement
-	complement := r.complement && requirement.complement
+	complement := r.Complement && requirement.Complement
 
 	// Boundaries
-	greaterThan := maxIntPtr(r.greaterThan, requirement.greaterThan)
-	lessThan := minIntPtr(r.lessThan, requirement.lessThan)
+	greaterThan := maxIntPtr(r.GreaterThan, requirement.GreaterThan)
+	lessThan := minIntPtr(r.LessThan, requirement.LessThan)
 	if greaterThan != nil && lessThan != nil && *greaterThan >= *lessThan {
 		return NewRequirement(r.Key, v1.NodeSelectorOpDoesNotExist)
 	}
 
 	// Values
 	var values sets.Set[string]
-	if r.complement && requirement.complement {
-		values = r.values.Union(requirement.values)
-	} else if r.complement && !requirement.complement {
-		values = requirement.values.Difference(r.values)
-	} else if !r.complement && requirement.complement {
-		values = r.values.Difference(requirement.values)
+	if r.Complement && requirement.Complement {
+		values = r.Values.Union(requirement.Values)
+	} else if r.Complement && !requirement.Complement {
+		values = requirement.Values.Difference(r.Values)
+	} else if !r.Complement && requirement.Complement {
+		values = r.Values.Difference(requirement.Values)
 	} else {
-		values = r.values.Intersection(requirement.values)
+		values = r.Values.Intersection(requirement.Values)
 	}
 	for value := range values {
 		if !withinIntPtrs(value, greaterThan, lessThan) {
@@ -157,21 +159,21 @@ func (r *Requirement) Intersection(requirement *Requirement) *Requirement {
 		greaterThan, lessThan = nil, nil
 	}
 
-	return &Requirement{Key: r.Key, values: values, complement: complement, greaterThan: greaterThan, lessThan: lessThan}
+	return &Requirement{Key: r.Key, Values: values, Complement: complement, GreaterThan: greaterThan, LessThan: lessThan}
 }
 
 func (r *Requirement) Any() string {
 	switch r.Operator() {
 	case v1.NodeSelectorOpIn:
-		return r.values.UnsortedList()[0]
+		return r.Values.UnsortedList()[0]
 	case v1.NodeSelectorOpNotIn, v1.NodeSelectorOpExists:
 		min := 0
 		max := math.MaxInt64
-		if r.greaterThan != nil {
-			min = *r.greaterThan + 1
+		if r.GreaterThan != nil {
+			min = *r.GreaterThan + 1
 		}
-		if r.lessThan != nil {
-			max = *r.lessThan
+		if r.LessThan != nil {
+			max = *r.LessThan
 		}
 		return fmt.Sprint(rand.Intn(max-min) + min) //nolint:gosec
 	}
@@ -180,22 +182,22 @@ func (r *Requirement) Any() string {
 
 // Has returns true if the requirement allows the value
 func (r *Requirement) Has(value string) bool {
-	if r.complement {
-		return !r.values.Has(value) && withinIntPtrs(value, r.greaterThan, r.lessThan)
+	if r.Complement {
+		return !r.Values.Has(value) && withinIntPtrs(value, r.GreaterThan, r.LessThan)
 	}
-	return r.values.Has(value) && withinIntPtrs(value, r.greaterThan, r.lessThan)
+	return r.Values.Has(value) && withinIntPtrs(value, r.GreaterThan, r.LessThan)
 }
 
-func (r *Requirement) Values() []string {
-	return r.values.UnsortedList()
+func (r *Requirement) ValuesJ() []string {
+	return r.Values.UnsortedList()
 }
 
 func (r *Requirement) Insert(items ...string) {
-	r.values.Insert(items...)
+	r.Values.Insert(items...)
 }
 
 func (r *Requirement) Operator() v1.NodeSelectorOperator {
-	if r.complement {
+	if r.Complement {
 		if r.Len() < math.MaxInt64 {
 			return v1.NodeSelectorOpNotIn
 		}
@@ -208,10 +210,10 @@ func (r *Requirement) Operator() v1.NodeSelectorOperator {
 }
 
 func (r *Requirement) Len() int {
-	if r.complement {
-		return math.MaxInt64 - r.values.Len()
+	if r.Complement {
+		return math.MaxInt64 - r.Values.Len()
 	}
-	return r.values.Len()
+	return r.Values.Len()
 }
 
 func (r *Requirement) String() string {
@@ -220,17 +222,17 @@ func (r *Requirement) String() string {
 	case v1.NodeSelectorOpExists, v1.NodeSelectorOpDoesNotExist:
 		s = fmt.Sprintf("%s %s", r.Key, r.Operator())
 	default:
-		values := sets.List(r.values)
+		values := sets.List(r.Values)
 		if length := len(values); length > 5 {
 			values = append(values[:5], fmt.Sprintf("and %d others", length-5))
 		}
 		s = fmt.Sprintf("%s %s %s", r.Key, r.Operator(), values)
 	}
-	if r.greaterThan != nil {
-		s += fmt.Sprintf(" >%d", *r.greaterThan)
+	if r.GreaterThan != nil {
+		s += fmt.Sprintf(" >%d", *r.GreaterThan)
 	}
-	if r.lessThan != nil {
-		s += fmt.Sprintf(" <%d", *r.lessThan)
+	if r.LessThan != nil {
+		s += fmt.Sprintf(" <%d", *r.LessThan)
 	}
 	return s
 }

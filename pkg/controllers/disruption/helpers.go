@@ -320,3 +320,18 @@ func hasDoNotDisruptPod(c *Candidate) (*v1.Pod, bool) {
 		return pod.HasDoNotDisrupt(p)
 	})
 }
+
+func fetchMinimumRequirementsFromInstanceTypeOptions(instanceTypeOptions []*cloudprovider.InstanceType) map[string]sets.Set[string] {
+	requirementsWithMinValues := make(map[string]sets.Set[string])
+	for _, it := range instanceTypeOptions {
+		for _, req := range it.Requirements {
+			value := 2
+			req.MinValues = &value
+			if req.MinValues != nil {
+				existingValues := requirementsWithMinValues[req.Key]
+				requirementsWithMinValues[req.Key] = existingValues.Union(it.Requirements.Get(req.Key).Values)
+			}
+		}
+	}
+	return requirementsWithMinValues
+}

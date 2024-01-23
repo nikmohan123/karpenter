@@ -26,6 +26,7 @@ import (
 	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/clock"
+	"knative.dev/pkg/logging"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"sigs.k8s.io/karpenter/pkg/apis/v1alpha5"
@@ -156,6 +157,13 @@ func (c *consolidation) computeConsolidation(ctx context.Context, candidates ...
 		return Command{}, nil
 	}
 
+	for key, value := range fetchMinimumRequirementsFromInstanceTypeOptions(results.NewNodeClaims[0].InstanceTypeOptions) {
+		// Return if minvalues are not honored
+		if len(value) < lo.FromPtr(results.NewNodeClaims[0].Requirements.Get(key).MinValues) {
+			return Command{}, fmt.Errorf("min requirement not met, %w", err)
+		}
+	}
+
 	// get the current node price based on the offering
 	// fallback if we can't find the specific zonal pricing data
 	candidatePrice, err := getCandidatePrices(candidates)
@@ -211,9 +219,12 @@ func (c *consolidation) computeConsolidation(ctx context.Context, candidates ...
 func (c *consolidation) computeSpotToSpotConsolidation(ctx context.Context, candidates []*Candidate, results *pscheduling.Results,
 	candidatePrice float64) (Command, error) {
 
+	logging.FromContext(ctx).Info("Nikhil: SpotToSpotConsolidation Came here")
+
 	// Spot consolidation is turned off.
 	if !options.FromContext(ctx).FeatureGates.SpotToSpotConsolidation {
 		if len(candidates) == 1 {
+			logging.FromContext(ctx).Info("Nikhil: SpotToSpotConsolidation is disabled")
 			c.recorder.Publish(disruptionevents.Unconsolidatable(candidates[0].Node, candidates[0].NodeClaim, "SpotToSpotConsolidation is disabled, can't replace a spot node with a spot node")...)
 		}
 		return Command{}, nil
@@ -230,8 +241,10 @@ func (c *consolidation) computeSpotToSpotConsolidation(ctx context.Context, cand
 
 	if len(results.NewNodeClaims[0].NodeClaimTemplate.InstanceTypeOptions) == 0 {
 		if len(candidates) == 1 {
+			logging.FromContext(ctx).Info("Nikhil: Can't replace spot node with a cheaper spot node")
 			c.recorder.Publish(disruptionevents.Unconsolidatable(candidates[0].Node, candidates[0].NodeClaim, "Can't replace spot node with a cheaper spot node")...)
 		}
+		logging.FromContext(ctx).Info("Nikhil: Can't replace spot node with a cheaper spot node, returning empty")
 		// no instance types remain after filtering by price
 		return Command{}, nil
 	}
@@ -245,16 +258,21 @@ func (c *consolidation) computeSpotToSpotConsolidation(ctx context.Context, cand
 		}, nil
 	}
 
+	//if (results.NewNodeClaims[0].NodeClaimTemplate.Requirements.Get())
+
 	// For single-node consolidation:
 	// We check whether we have 15 cheaper instances than the current candidate instance. If this is the case, we know the following things:
 	//   1) The current candidate is not in the set of the 15 cheapest instance types and
 	//   2) There were at least 15 options cheaper than the current candidate.
 	if len(results.NewNodeClaims[0].NodeClaimTemplate.InstanceTypeOptions) < MinInstanceTypesForSpotToSpotConsolidation {
+		logging.FromContext(ctx).Infof("Nikhil: SpotToSpotConsolidation requires %d cheaper instance type options than the current candidate to consolidate, got %d",
+			MinInstanceTypesForSpotToSpotConsolidation, len(results.NewNodeClaims[0].NodeClaimTemplate.InstanceTypeOptions))
 		c.recorder.Publish(disruptionevents.Unconsolidatable(candidates[0].Node, candidates[0].NodeClaim, fmt.Sprintf("SpotToSpotConsolidation requires %d cheaper instance type options than the current candidate to consolidate, got %d",
 			MinInstanceTypesForSpotToSpotConsolidation, len(results.NewNodeClaims[0].NodeClaimTemplate.InstanceTypeOptions)))...)
 		return Command{}, nil
 	}
 
+	logging.FromContext(ctx).Info("Nikhil: Consolidating")
 	// Restrict the InstanceTypeOptions for launch to 15 so we don't get into a continual consolidation situation.
 	// For example:
 	// 1) Suppose we have 5 instance types, (A, B, C, D, E) in order of price with the minimum flexibility 3 and they’ll all work for our pod.  We send CreateInstanceFromTypes(A,B,C,D,E) and it gives us a E type based on price and availability of spot.

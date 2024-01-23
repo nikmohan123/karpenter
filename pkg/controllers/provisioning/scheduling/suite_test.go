@@ -1759,7 +1759,7 @@ var _ = Context("NodePool", func() {
 			// large is the cheapest, so we should pick it, but the other two types are also valid options
 			Expect(node.Labels[v1.LabelInstanceTypeStable]).To(Equal("large"))
 			// all three options should be passed to the cloud provider
-			possibleInstanceType := sets.NewString(pscheduling.NewNodeSelectorRequirements(cloudProvider.CreateCalls[0].Spec.Requirements...).Get(v1.LabelInstanceTypeStable).Values()...)
+			possibleInstanceType := sets.NewString(pscheduling.NewNodeSelectorRequirements(cloudProvider.CreateCalls[0].Spec.Requirements...).Get(v1.LabelInstanceTypeStable).ValuesJ()...)
 			Expect(possibleInstanceType).To(Equal(sets.NewString("small", "medium", "large")))
 		})
 	})
