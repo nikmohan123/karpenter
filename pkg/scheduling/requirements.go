@@ -44,12 +44,23 @@ func NewRequirements(requirements ...*Requirement) Requirements {
 }
 
 // NewRequirements constructs requirements from NodeSelectorRequirements
-func NewNodeSelectorRequirements(requirements ...v1.NodeSelectorRequirement) Requirements {
+func NewNodeSelectorRequirements(requirements ...v1beta1.NodeSelectorRequirementWithFlexibility) Requirements {
 	r := NewRequirements()
 	for _, requirement := range requirements {
 		r.Add(NewRequirement(requirement.Key, requirement.Operator, requirement.Values...))
 	}
 	return r
+}
+
+func ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(requirements ...v1.NodeSelectorRequirement) []v1beta1.NodeSelectorRequirementWithFlexibility {
+	var nodeSelectorRequirementWithFlexibility []v1beta1.NodeSelectorRequirementWithFlexibility
+	for _, req := range requirements {
+		nodeSelectorRequirementWithFlexibility = append(nodeSelectorRequirementWithFlexibility, v1beta1.NodeSelectorRequirementWithFlexibility{
+			NodeSelectorRequirement: req,
+		})
+	}
+
+	return nodeSelectorRequirementWithFlexibility
 }
 
 // NewLabelRequirements constructs requirements from labels
@@ -88,14 +99,14 @@ func newPodRequirements(pod *v1.Pod, typ podRequirementType) Requirements {
 		// Select heaviest preference and treat as a requirement. An outer loop will iteratively unconstrain them if unsatisfiable.
 		if preferred := pod.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution; len(preferred) > 0 {
 			sort.Slice(preferred, func(i int, j int) bool { return preferred[i].Weight > preferred[j].Weight })
-			requirements.Add(NewNodeSelectorRequirements(preferred[0].Preference.MatchExpressions...).Values()...)
+			requirements.Add(NewNodeSelectorRequirements(ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(preferred[0].Preference.MatchExpressions...)...).Values()...)
 		}
 	}
 
 	// Select first requirement. An outer loop will iteratively remove OR requirements if unsatisfiable
 	if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil &&
 		len(pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms) > 0 {
-		requirements.Add(NewNodeSelectorRequirements(pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions...).Values()...)
+		requirements.Add(NewNodeSelectorRequirements(ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions...)...).Values()...)
 	}
 	return requirements
 }
@@ -108,8 +119,8 @@ func HasPreferredNodeAffinity(p *v1.Pod) bool {
 	return p.Spec.Affinity != nil && p.Spec.Affinity.NodeAffinity != nil && len(p.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0
 }
 
-func (r Requirements) NodeSelectorRequirements() []v1.NodeSelectorRequirement {
-	return lo.Map(lo.Values(r), func(req *Requirement, _ int) v1.NodeSelectorRequirement {
+func (r Requirements) NodeSelectorRequirements() []v1beta1.NodeSelectorRequirementWithFlexibility {
+	return lo.Map(lo.Values(r), func(req *Requirement, _ int) v1beta1.NodeSelectorRequirementWithFlexibility {
 		return req.NodeSelectorRequirement()
 	})
 }

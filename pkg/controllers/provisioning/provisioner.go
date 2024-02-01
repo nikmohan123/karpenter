@@ -353,7 +353,9 @@ func (p *Provisioner) Create(ctx context.Context, n *scheduler.NodeClaim, opts .
 	if err := p.kubeClient.Create(ctx, nodeClaim); err != nil {
 		return "", err
 	}
-	instanceTypeRequirement, _ := lo.Find(nodeClaim.Spec.Requirements, func(req v1.NodeSelectorRequirement) bool { return req.Key == v1.LabelInstanceTypeStable })
+	instanceTypeRequirement, _ := lo.Find(nodeClaim.Spec.Requirements, func(req v1beta1.NodeSelectorRequirementWithFlexibility) bool {
+		return req.Key == v1.LabelInstanceTypeStable
+	})
 	logging.FromContext(ctx).With("nodeclaim", nodeClaim.Name, "requests", nodeClaim.Spec.Resources.Requests, "instance-types", instanceTypeList(instanceTypeRequirement.Values)).Infof("created nodeclaim")
 	metrics.NodeClaimsCreatedCounter.With(prometheus.Labels{
 		metrics.ReasonLabel:   options.Reason,
@@ -489,7 +491,9 @@ func validateNodeSelectorTerm(term v1.NodeSelectorTerm) (errs error) {
 	}
 	if term.MatchExpressions != nil {
 		for _, requirement := range term.MatchExpressions {
-			errs = multierr.Append(errs, v1beta1.ValidateRequirement(requirement))
+			errs = multierr.Append(errs, v1beta1.ValidateRequirement(v1beta1.NodeSelectorRequirementWithFlexibility{
+				NodeSelectorRequirement: requirement,
+			}))
 		}
 	}
 	return errs

@@ -1986,11 +1986,13 @@ var _ = Describe("Consolidation", func() {
 					}}})
 
 			// nodePool should require on-demand instance for this test case
-			nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 				{
-					Key:      v1beta1.CapacityTypeLabelKey,
-					Operator: v1.NodeSelectorOpIn,
-					Values:   []string{v1beta1.CapacityTypeOnDemand},
+					NodeSelectorRequirement: v1.NodeSelectorRequirement{
+						Key:      v1beta1.CapacityTypeLabelKey,
+						Operator: v1.NodeSelectorOpIn,
+						Values:   []string{v1beta1.CapacityTypeOnDemand},
+					},
 				},
 			}
 			nodeClaim, node = test.NodeClaimAndNode(v1beta1.NodeClaim{
@@ -2808,7 +2810,7 @@ var _ = Describe("Consolidation", func() {
 				Spec: v1beta1.NodePoolSpec{
 					Template: v1beta1.NodeClaimTemplate{
 						Spec: v1beta1.NodeClaimSpec{
-							Requirements: []v1.NodeSelectorRequirement{},
+							Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{},
 							NodeClassRef: &v1beta1.NodeClassReference{
 								Name: "non-existent",
 							},

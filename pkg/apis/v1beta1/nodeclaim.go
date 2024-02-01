@@ -38,7 +38,7 @@ type NodeClaimSpec struct {
 	// +kubebuilder:validation:XValidation:message="requirements operator 'Gt' or 'Lt' must have a single positive integer value",rule="self.all(x, (x.operator == 'Gt' || x.operator == 'Lt') ? (x.values.size() == 1 && int(x.values[0]) >= 0) : true)"
 	// +kubebuilder:validation:MaxItems:=30
 	// +required
-	Requirements []v1.NodeSelectorRequirement `json:"requirements" hash:"ignore"`
+	Requirements []NodeSelectorRequirementWithFlexibility `json:"requirements" hash:"ignore"`
 	// Resources models the resource requirements for the NodeClaim to launch
 	// +optional
 	Resources ResourceRequirements `json:"resources,omitempty" hash:"ignore"`
@@ -52,6 +52,15 @@ type NodeClaimSpec struct {
 	// NodeClassRef is a reference to an object that defines provider specific configuration
 	// +required
 	NodeClassRef *NodeClassReference `json:"nodeClassRef"`
+}
+
+type NodeSelectorRequirementWithFlexibility struct {
+	v1.NodeSelectorRequirement
+	MinValues *int
+}
+
+type CustomNodeSelectorTerm struct {
+	v1.NodeSelectorTerm
 }
 
 // ResourceRequirements models the required resources for the NodeClaim to launch

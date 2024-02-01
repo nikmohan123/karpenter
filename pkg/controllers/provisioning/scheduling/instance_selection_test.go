@@ -49,16 +49,20 @@ var _ = Describe("Instance Type Selection", func() {
 			Spec: v1beta1.NodePoolSpec{
 				Template: v1beta1.NodeClaimTemplate{
 					Spec: v1beta1.NodeClaimSpec{
-						Requirements: []v1.NodeSelectorRequirement{
+						Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{
 							{
-								Key:      v1beta1.CapacityTypeLabelKey,
-								Operator: v1.NodeSelectorOpIn,
-								Values:   []string{v1beta1.CapacityTypeSpot, v1beta1.CapacityTypeOnDemand},
+								NodeSelectorRequirement: v1.NodeSelectorRequirement{
+									Key:      v1beta1.CapacityTypeLabelKey,
+									Operator: v1.NodeSelectorOpIn,
+									Values:   []string{v1beta1.CapacityTypeSpot, v1beta1.CapacityTypeOnDemand},
+								},
 							},
 							{
-								Key:      v1.LabelArchStable,
-								Operator: v1.NodeSelectorOpIn,
-								Values:   []string{v1beta1.ArchitectureArm64, v1beta1.ArchitectureAmd64},
+								NodeSelectorRequirement: v1.NodeSelectorRequirement{
+									Key:      v1.LabelArchStable,
+									Operator: v1.NodeSelectorOpIn,
+									Values:   []string{v1beta1.ArchitectureArm64, v1beta1.ArchitectureAmd64},
+								},
 							},
 						},
 					},
@@ -114,11 +118,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureArm64)
 	})
 	It("should schedule on one of the cheapest instances (prov arch = amd64)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelArchStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.ArchitectureAmd64},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelArchStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.ArchitectureAmd64},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -129,11 +135,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureAmd64)
 	})
 	It("should schedule on one of the cheapest instances (prov arch = arm64)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelArchStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.ArchitectureArm64},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelArchStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.ArchitectureArm64},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -144,11 +152,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureArm64)
 	})
 	It("should schedule on one of the cheapest instances (prov os = windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelOSStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{string(v1.Windows)},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelOSStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{string(v1.Windows)},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -172,11 +182,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelOSStable, string(v1.Windows))
 	})
 	It("should schedule on one of the cheapest instances (prov os = windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelOSStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{string(v1.Windows)},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelOSStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{string(v1.Windows)},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -213,11 +225,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelOSStable, string(v1.Linux))
 	})
 	It("should schedule on one of the cheapest instances (prov zone = test-zone-2)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelTopologyZone,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{"test-zone-2"},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelTopologyZone,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"test-zone-2"},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -241,11 +255,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelTopologyZone, "test-zone-2")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = spot)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1beta1.CapacityTypeLabelKey,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.CapacityTypeSpot},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1beta1.CapacityTypeLabelKey,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.CapacityTypeSpot},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -269,16 +285,20 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeLabelKey, v1beta1.CapacityTypeSpot)
 	})
 	It("should schedule on one of the cheapest instances (prov ct = ondemand, prov zone = test-zone-1)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1beta1.CapacityTypeLabelKey,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.CapacityTypeOnDemand},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1beta1.CapacityTypeLabelKey,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.CapacityTypeOnDemand},
+				},
 			},
 			{
-				Key:      v1.LabelTopologyZone,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{"test-zone-1"},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelTopologyZone,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"test-zone-1"},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -308,11 +328,13 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithOffering(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeSpot, "test-zone-1")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = spot, pod zone = test-zone-2)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1beta1.CapacityTypeLabelKey,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.CapacityTypeSpot},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1beta1.CapacityTypeLabelKey,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.CapacityTypeSpot},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -328,26 +350,34 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithOffering(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeSpot, "test-zone-2")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = ondemand/test-zone-1/arm64/windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelArchStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.ArchitectureArm64},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelArchStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.ArchitectureArm64},
+				},
 			},
 			{
-				Key:      v1.LabelOSStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{string(v1.Windows)},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelOSStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{string(v1.Windows)},
+				},
 			},
 			{
-				Key:      v1beta1.CapacityTypeLabelKey,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.CapacityTypeOnDemand},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1beta1.CapacityTypeLabelKey,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.CapacityTypeOnDemand},
+				},
 			},
 			{
-				Key:      v1.LabelTopologyZone,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{"test-zone-1"},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelTopologyZone,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"test-zone-1"},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -360,16 +390,20 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, "arm64")
 	})
 	It("should schedule on one of the cheapest instances (prov = spot/test-zone-2, pod = amd64/linux)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelArchStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.ArchitectureAmd64},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelArchStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.ArchitectureAmd64},
+				},
 			},
 			{
-				Key:      v1.LabelOSStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{string(v1.Linux)},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelOSStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{string(v1.Linux)},
+				},
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
@@ -485,11 +519,13 @@ var _ = Describe("Instance Type Selection", func() {
 			return true
 		})
 
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1.LabelArchStable,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{v1beta1.ArchitectureArm64},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelArchStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{v1beta1.ArchitectureArm64},
+				},
 			},
 		}
 		Expect(len(cloudProvider.InstanceTypes)).To(BeNumerically(">", 0))
@@ -589,11 +625,13 @@ var _ = Describe("Instance Type Selection", func() {
 				},
 			}),
 		}
-		nodePool.Spec.Template.Spec.Requirements = []v1.NodeSelectorRequirement{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
-				Key:      v1beta1.CapacityTypeLabelKey,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   []string{"on-demand"},
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1beta1.CapacityTypeLabelKey,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"on-demand"},
+				},
 			},
 		}
 

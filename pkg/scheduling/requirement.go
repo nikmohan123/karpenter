@@ -80,46 +80,58 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 	return r
 }
 
-func (r *Requirement) NodeSelectorRequirement() v1.NodeSelectorRequirement {
+func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementWithFlexibility {
 	switch {
 	case r.greaterThan != nil:
-		return v1.NodeSelectorRequirement{
-			Key:      r.Key,
-			Operator: v1.NodeSelectorOpGt,
-			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.greaterThan)), 10)},
+		return v1beta1.NodeSelectorRequirementWithFlexibility{
+			NodeSelectorRequirement: v1.NodeSelectorRequirement{
+				Key:      r.Key,
+				Operator: v1.NodeSelectorOpGt,
+				Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.greaterThan)), 10)},
+			},
 		}
 	case r.lessThan != nil:
-		return v1.NodeSelectorRequirement{
-			Key:      r.Key,
-			Operator: v1.NodeSelectorOpLt,
-			Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.lessThan)), 10)},
+		return v1beta1.NodeSelectorRequirementWithFlexibility{
+			NodeSelectorRequirement: v1.NodeSelectorRequirement{
+				Key:      r.Key,
+				Operator: v1.NodeSelectorOpLt,
+				Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.lessThan)), 10)},
+			},
 		}
 	case r.complement:
 		switch {
 		case len(r.values) > 0:
-			return v1.NodeSelectorRequirement{
-				Key:      r.Key,
-				Operator: v1.NodeSelectorOpNotIn,
-				Values:   sets.List(r.values),
+			return v1beta1.NodeSelectorRequirementWithFlexibility{
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      r.Key,
+					Operator: v1.NodeSelectorOpNotIn,
+					Values:   sets.List(r.values),
+				},
 			}
 		default:
-			return v1.NodeSelectorRequirement{
-				Key:      r.Key,
-				Operator: v1.NodeSelectorOpExists,
+			return v1beta1.NodeSelectorRequirementWithFlexibility{
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      r.Key,
+					Operator: v1.NodeSelectorOpExists,
+				},
 			}
 		}
 	default:
 		switch {
 		case len(r.values) > 0:
-			return v1.NodeSelectorRequirement{
-				Key:      r.Key,
-				Operator: v1.NodeSelectorOpIn,
-				Values:   sets.List(r.values),
+			return v1beta1.NodeSelectorRequirementWithFlexibility{
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      r.Key,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   sets.List(r.values),
+				},
 			}
 		default:
-			return v1.NodeSelectorRequirement{
-				Key:      r.Key,
-				Operator: v1.NodeSelectorOpDoesNotExist,
+			return v1beta1.NodeSelectorRequirementWithFlexibility{
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      r.Key,
+					Operator: v1.NodeSelectorOpDoesNotExist,
+				},
 			}
 		}
 	}

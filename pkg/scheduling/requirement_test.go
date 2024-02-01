@@ -25,6 +25,7 @@ import (
 	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 )
 
 var _ = Describe("Requirement", func() {
@@ -57,7 +58,7 @@ var _ = Describe("Requirement", func() {
 			})
 			for _, r := range []Requirements{
 				NewLabelRequirements(nodeSelector),
-				NewNodeSelectorRequirements(requirements...),
+				NewNodeSelectorRequirements(ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(requirements...)...),
 				NewPodRequirements(&v1.Pod{
 					Spec: v1.PodSpec{
 						NodeSelector: nodeSelector,
@@ -447,20 +448,20 @@ var _ = Describe("Requirement", func() {
 	})
 	Context("NodeSelectorRequirements Conversion", func() {
 		It("should return the expected NodeSelectorRequirement", func() {
-			Expect(exists.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpExists}))
-			Expect(doesNotExist.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpDoesNotExist}))
-			Expect(inA.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"A"}}))
-			Expect(inB.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"B"}}))
-			Expect(inAB.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"A", "B"}}))
-			Expect(notInA.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpNotIn, Values: []string{"A"}}))
-			Expect(in1.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"1"}}))
-			Expect(in9.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"9"}}))
-			Expect(in19.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"1", "9"}}))
-			Expect(notIn12.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpNotIn, Values: []string{"1", "2"}}))
-			Expect(greaterThan1.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpGt, Values: []string{"1"}}))
-			Expect(greaterThan9.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpGt, Values: []string{"9"}}))
-			Expect(lessThan1.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpLt, Values: []string{"1"}}))
-			Expect(lessThan9.NodeSelectorRequirement()).To(Equal(v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpLt, Values: []string{"9"}}))
+			Expect(exists.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpExists}}))
+			Expect(doesNotExist.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpDoesNotExist}}))
+			Expect(inA.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"A"}}}))
+			Expect(inB.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"B"}}}))
+			Expect(inAB.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"A", "B"}}}))
+			Expect(notInA.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpNotIn, Values: []string{"A"}}}))
+			Expect(in1.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"1"}}}))
+			Expect(in9.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"9"}}}))
+			Expect(in19.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpIn, Values: []string{"1", "9"}}}))
+			Expect(notIn12.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpNotIn, Values: []string{"1", "2"}}}))
+			Expect(greaterThan1.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpGt, Values: []string{"1"}}}))
+			Expect(greaterThan9.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpGt, Values: []string{"9"}}}))
+			Expect(lessThan1.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpLt, Values: []string{"1"}}}))
+			Expect(lessThan9.NodeSelectorRequirement()).To(Equal(v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "key", Operator: v1.NodeSelectorOpLt, Values: []string{"9"}}}))
 		})
 
 	})

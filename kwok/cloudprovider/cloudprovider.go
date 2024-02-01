@@ -139,7 +139,7 @@ func (c CloudProvider) toNode(nodeClaim *v1beta1.NodeClaim) (*v1.Node, error) {
 	if requirements.Get(v1beta1.CapacityTypeLabelKey).Has(v1beta1.CapacityTypeSpot) {
 		capacityType = v1beta1.CapacityTypeSpot
 	}
-	req, found := lo.Find(nodeClaim.Spec.Requirements, func(req v1.NodeSelectorRequirement) bool {
+	req, found := lo.Find(nodeClaim.Spec.Requirements, func(req v1beta1.NodeSelectorRequirementWithFlexibility) bool {
 		return req.Key == v1.LabelInstanceTypeStable
 	})
 	if !found {

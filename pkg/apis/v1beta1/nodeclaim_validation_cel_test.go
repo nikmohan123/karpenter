@@ -27,6 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 	"knative.dev/pkg/ptr"
 
+	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 	. "sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 
 	v1 "k8s.io/api/core/v1"
@@ -48,10 +49,12 @@ var _ = Describe("Validation", func() {
 					Kind: "NodeClaim",
 					Name: "default",
 				},
-				Requirements: []v1.NodeSelectorRequirement{
+				Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{
 					{
-						Key:      CapacityTypeLabelKey,
-						Operator: v1.NodeSelectorOpExists,
+						NodeSelectorRequirement: v1.NodeSelectorRequirement{
+							Key:      CapacityTypeLabelKey,
+							Operator: v1.NodeSelectorOpExists,
+						},
 					},
 				},
 			},
@@ -94,27 +97,27 @@ var _ = Describe("Validation", func() {
 	})
 	Context("Requirements", func() {
 		It("should allow supported ops", func() {
-			nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"1"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"1"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpNotIn},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpExists},
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"1"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"1"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpNotIn}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpExists}},
 			}
 			Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 		})
 		It("should fail for unsupported ops", func() {
 			for _, op := range []v1.NodeSelectorOperator{"unknown"} {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-					{Key: v1.LabelTopologyZone, Operator: op, Values: []string{"test"}},
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: op, Values: []string{"test"}}},
 				}
 				Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 			}
 		})
 		It("should fail for restricted domains", func() {
 			for label := range RestrictedLabelDomains {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-					{Key: label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}},
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}}},
 				}
 				Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 			}
@@ -122,8 +125,8 @@ var _ = Describe("Validation", func() {
 		It("should allow restricted domains exceptions", func() {
 			oldNodeClaim := nodeClaim.DeepCopy()
 			for label := range LabelDomainExceptions {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-					{Key: label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}},
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}}},
 				}
 				Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 				Expect(env.Client.Delete(ctx, nodeClaim)).To(Succeed())
@@ -133,8 +136,8 @@ var _ = Describe("Validation", func() {
 		It("should allow restricted subdomains exceptions", func() {
 			oldNodeClaim := nodeClaim.DeepCopy()
 			for label := range LabelDomainExceptions {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-					{Key: "subdomain." + label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}},
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "subdomain." + label + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test"}}},
 				}
 				Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 				Expect(env.Client.Delete(ctx, nodeClaim)).To(Succeed())
@@ -144,8 +147,8 @@ var _ = Describe("Validation", func() {
 		It("should allow well known label exceptions", func() {
 			oldNodeClaim := nodeClaim.DeepCopy()
 			for label := range WellKnownLabels.Difference(sets.New(NodePoolLabelKey)) {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-					{Key: label, Operator: v1.NodeSelectorOpIn, Values: []string{"test"}},
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: label, Operator: v1.NodeSelectorOpIn, Values: []string{"test"}}},
 				}
 				Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 				Expect(env.Client.Delete(ctx, nodeClaim)).To(Succeed())
@@ -153,28 +156,28 @@ var _ = Describe("Validation", func() {
 			}
 		})
 		It("should allow non-empty set after removing overlapped value", func() {
-			nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test", "foo"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpNotIn, Values: []string{"test", "bar"}},
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test", "foo"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpNotIn, Values: []string{"test", "bar"}}},
 			}
 			Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 		})
 		It("should allow empty requirements", func() {
-			nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{}
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{}
 			Expect(env.Client.Create(ctx, nodeClaim)).To(Succeed())
 		})
 		It("should fail with invalid GT or LT values", func() {
-			for _, requirement := range []v1.NodeSelectorRequirement{
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"1", "2"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"a"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"-1"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"1", "2"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"a"}},
-				{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"-1"}},
+			for _, requirement := range []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"1", "2"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"a"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpGt, Values: []string{"-1"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"1", "2"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"a"}}},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpLt, Values: []string{"-1"}}},
 			} {
-				nodeClaim.Spec.Requirements = []v1.NodeSelectorRequirement{requirement}
+				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{requirement}
 				Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 			}
 		})

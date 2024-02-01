@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 )
 
 var _ = Describe("Requirements", func() {
@@ -602,20 +603,20 @@ var _ = Describe("Requirements", func() {
 				lessThan9,
 			)
 			Expect(reqs.NodeSelectorRequirements()).To(ContainElements(
-				v1.NodeSelectorRequirement{Key: "exists", Operator: v1.NodeSelectorOpExists},
-				v1.NodeSelectorRequirement{Key: "doesNotExist", Operator: v1.NodeSelectorOpDoesNotExist},
-				v1.NodeSelectorRequirement{Key: "inA", Operator: v1.NodeSelectorOpIn, Values: []string{"A"}},
-				v1.NodeSelectorRequirement{Key: "inB", Operator: v1.NodeSelectorOpIn, Values: []string{"B"}},
-				v1.NodeSelectorRequirement{Key: "inAB", Operator: v1.NodeSelectorOpIn, Values: []string{"A", "B"}},
-				v1.NodeSelectorRequirement{Key: "notInA", Operator: v1.NodeSelectorOpNotIn, Values: []string{"A"}},
-				v1.NodeSelectorRequirement{Key: "in1", Operator: v1.NodeSelectorOpIn, Values: []string{"1"}},
-				v1.NodeSelectorRequirement{Key: "in9", Operator: v1.NodeSelectorOpIn, Values: []string{"9"}},
-				v1.NodeSelectorRequirement{Key: "in19", Operator: v1.NodeSelectorOpIn, Values: []string{"1", "9"}},
-				v1.NodeSelectorRequirement{Key: "notIn12", Operator: v1.NodeSelectorOpNotIn, Values: []string{"1", "2"}},
-				v1.NodeSelectorRequirement{Key: "greaterThan1", Operator: v1.NodeSelectorOpGt, Values: []string{"1"}},
-				v1.NodeSelectorRequirement{Key: "greaterThan9", Operator: v1.NodeSelectorOpGt, Values: []string{"9"}},
-				v1.NodeSelectorRequirement{Key: "lessThan1", Operator: v1.NodeSelectorOpLt, Values: []string{"1"}},
-				v1.NodeSelectorRequirement{Key: "lessThan9", Operator: v1.NodeSelectorOpLt, Values: []string{"9"}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "exists", Operator: v1.NodeSelectorOpExists}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "doesNotExist", Operator: v1.NodeSelectorOpDoesNotExist}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "inA", Operator: v1.NodeSelectorOpIn, Values: []string{"A"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "inB", Operator: v1.NodeSelectorOpIn, Values: []string{"B"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "inAB", Operator: v1.NodeSelectorOpIn, Values: []string{"A", "B"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "notInA", Operator: v1.NodeSelectorOpNotIn, Values: []string{"A"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "in1", Operator: v1.NodeSelectorOpIn, Values: []string{"1"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "in9", Operator: v1.NodeSelectorOpIn, Values: []string{"9"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "in19", Operator: v1.NodeSelectorOpIn, Values: []string{"1", "9"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "notIn12", Operator: v1.NodeSelectorOpNotIn, Values: []string{"1", "2"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "greaterThan1", Operator: v1.NodeSelectorOpGt, Values: []string{"1"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "greaterThan9", Operator: v1.NodeSelectorOpGt, Values: []string{"9"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "lessThan1", Operator: v1.NodeSelectorOpLt, Values: []string{"1"}}},
+				v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "lessThan9", Operator: v1.NodeSelectorOpLt, Values: []string{"9"}}},
 			))
 			Expect(reqs.NodeSelectorRequirements()).To(HaveLen(14))
 		})
