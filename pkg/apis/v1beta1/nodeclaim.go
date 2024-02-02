@@ -56,11 +56,7 @@ type NodeClaimSpec struct {
 
 type NodeSelectorRequirementWithFlexibility struct {
 	v1.NodeSelectorRequirement
-	MinValues *int
-}
-
-type CustomNodeSelectorTerm struct {
-	v1.NodeSelectorTerm
+	MinValues *int `json:"minValues,omitempty"`
 }
 
 // ResourceRequirements models the required resources for the NodeClaim to launch

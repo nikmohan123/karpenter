@@ -39,8 +39,7 @@ type Requirement struct {
 	MinValues   *int
 }
 
-// TODO: Make changes to accept MinValues from API
-func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...string) *Requirement {
+func NewRequirementWithFlexibility(key string, operator v1.NodeSelectorOperator, minValues *int, values ...string) *Requirement {
 	if normalized, ok := v1beta1.NormalizedLabels[key]; ok {
 		key = normalized
 	}
@@ -55,6 +54,7 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 			Key:        key,
 			values:     s,
 			complement: false,
+			MinValues:  minValues,
 		}
 	}
 
@@ -62,6 +62,7 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 		Key:        key,
 		values:     sets.New[string](),
 		complement: true,
+		MinValues:  minValues,
 	}
 	if operator == v1.NodeSelectorOpIn || operator == v1.NodeSelectorOpDoesNotExist {
 		r.complement = false
@@ -78,6 +79,10 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 		r.lessThan = &value
 	}
 	return r
+}
+
+func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...string) *Requirement {
+	return NewRequirementWithFlexibility(key, operator, nil, values...)
 }
 
 func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementWithFlexibility {
@@ -171,7 +176,7 @@ func (r *Requirement) Intersection(requirement *Requirement) *Requirement {
 		greaterThan, lessThan = nil, nil
 	}
 
-	return &Requirement{Key: r.Key, values: values, complement: complement, greaterThan: greaterThan, lessThan: lessThan}
+	return &Requirement{Key: r.Key, values: values, complement: complement, greaterThan: greaterThan, lessThan: lessThan, MinValues: maxIntPtr(r.MinValues, requirement.MinValues)}
 }
 
 func (r *Requirement) Any() string {

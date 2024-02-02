@@ -55,7 +55,7 @@ func NewNodeClaimTemplate(nodePool *v1beta1.NodePool) *NodeClaimTemplate {
 func (i *NodeClaimTemplate) ToNodeClaim(nodePool *v1beta1.NodePool) *v1beta1.NodeClaim {
 	// Order the instance types by price and only take the first 100 of them to decrease the instance type size in the requirements
 	instanceTypes := lo.Slice(i.InstanceTypeOptions.OrderByPrice(i.Requirements), 0, 100)
-	i.Requirements.Add(scheduling.NewRequirement(v1.LabelInstanceTypeStable, v1.NodeSelectorOpIn, lo.Map(instanceTypes, func(i *cloudprovider.InstanceType, _ int) string {
+	i.Requirements.Add(scheduling.NewRequirementWithFlexibility(v1.LabelInstanceTypeStable, v1.NodeSelectorOpIn, i.Requirements.Get(v1.LabelInstanceTypeStable).MinValues, lo.Map(instanceTypes, func(i *cloudprovider.InstanceType, _ int) string {
 		return i.Name
 	})...))
 

@@ -47,7 +47,7 @@ func NewRequirements(requirements ...*Requirement) Requirements {
 func NewNodeSelectorRequirements(requirements ...v1beta1.NodeSelectorRequirementWithFlexibility) Requirements {
 	r := NewRequirements()
 	for _, requirement := range requirements {
-		r.Add(NewRequirement(requirement.Key, requirement.Operator, requirement.Values...))
+		r.Add(NewRequirementWithFlexibility(requirement.Key, requirement.Operator, requirement.MinValues, requirement.Values...))
 	}
 	return r
 }

@@ -75,7 +75,6 @@ func (n *NodeClaim) Add(pod *v1.Pod) error {
 	if err := n.hostPortUsage.Conflicts(pod, hostPorts); err != nil {
 		return fmt.Errorf("checking host port usage, %w", err)
 	}
-
 	nodeClaimRequirements := scheduling.NewRequirements(n.Requirements.Values()...)
 	podRequirements := scheduling.NewPodRequirements(pod)
 
