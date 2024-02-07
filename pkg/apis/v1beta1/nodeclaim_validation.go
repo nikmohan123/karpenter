@@ -163,6 +163,11 @@ func ValidateRequirement(requirement NodeSelectorRequirementWithFlexibility) err
 	if requirement.Operator == v1.NodeSelectorOpIn && len(requirement.Values) == 0 {
 		errs = multierr.Append(errs, fmt.Errorf("key %s with operator %s must have a value defined", requirement.Key, requirement.Operator))
 	}
+
+	if requirement.Operator == v1.NodeSelectorOpIn && requirement.MinValues != nil && len(requirement.Values) < lo.FromPtr(requirement.MinValues) {
+		errs = multierr.Append(errs, fmt.Errorf("key %s with operator %s must have at least minimum number of values defined", requirement.Key, requirement.Operator))
+	}
+
 	if requirement.Operator == v1.NodeSelectorOpGt || requirement.Operator == v1.NodeSelectorOpLt {
 		if len(requirement.Values) != 1 {
 			errs = multierr.Append(errs, fmt.Errorf("key %s with operator %s must have a single positive integer value", requirement.Key, requirement.Operator))

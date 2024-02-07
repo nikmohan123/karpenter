@@ -25,6 +25,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 	"knative.dev/pkg/ptr"
 
 	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
@@ -180,6 +181,18 @@ var _ = Describe("Validation", func() {
 				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{requirement}
 				Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 			}
+		})
+		It("should error when minValues is negative", func() {
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(-1)},
+			}
+			Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
+		})
+		It("should error when minValues more than 100", func() {
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(101)},
+			}
+			Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 		})
 	})
 	Context("Kubelet", func() {

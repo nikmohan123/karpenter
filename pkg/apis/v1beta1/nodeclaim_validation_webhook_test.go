@@ -25,6 +25,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 	"knative.dev/pkg/ptr"
 
 	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
@@ -168,6 +169,12 @@ var _ = Describe("Validation", func() {
 				nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{requirement}
 				Expect(nodeClaim.Validate(ctx)).ToNot(Succeed())
 			}
+		})
+		It("should error when minValues is greater than the values specified within In operator", func() {
+			nodeClaim.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(2)},
+			}
+			Expect(nodeClaim.Validate(ctx)).ToNot(Succeed())
 		})
 	})
 	Context("Kubelet", func() {

@@ -358,6 +358,12 @@ var _ = Describe("Webhook/Validation", func() {
 					Expect(nodePool.Validate(ctx)).ToNot(Succeed())
 				}
 			})
+			It("should error when minValues is greater than the values specified within In operator", func() {
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(2)},
+				}
+				Expect(nodePool.Validate(ctx)).ToNot(Succeed())
+			})
 		})
 		Context("KubeletConfiguration", func() {
 			It("should fail on kubeReserved with invalid keys", func() {

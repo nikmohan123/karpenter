@@ -94,6 +94,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 				Operator: v1.NodeSelectorOpGt,
 				Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.greaterThan)), 10)},
 			},
+			MinValues: r.MinValues,
 		}
 	case r.lessThan != nil:
 		return v1beta1.NodeSelectorRequirementWithFlexibility{
@@ -102,6 +103,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 				Operator: v1.NodeSelectorOpLt,
 				Values:   []string{strconv.FormatInt(int64(lo.FromPtr(r.lessThan)), 10)},
 			},
+			MinValues: r.MinValues,
 		}
 	case r.complement:
 		switch {
@@ -112,6 +114,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 					Operator: v1.NodeSelectorOpNotIn,
 					Values:   sets.List(r.values),
 				},
+				MinValues: r.MinValues,
 			}
 		default:
 			return v1beta1.NodeSelectorRequirementWithFlexibility{
@@ -119,6 +122,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpExists,
 				},
+				MinValues: r.MinValues,
 			}
 		}
 	default:
@@ -130,6 +134,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 					Operator: v1.NodeSelectorOpIn,
 					Values:   sets.List(r.values),
 				},
+				MinValues: r.MinValues,
 			}
 		default:
 			return v1beta1.NodeSelectorRequirementWithFlexibility{
@@ -137,6 +142,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpDoesNotExist,
 				},
+				MinValues: r.MinValues,
 			}
 		}
 	}
@@ -151,8 +157,9 @@ func (r *Requirement) Intersection(requirement *Requirement) *Requirement {
 	// Boundaries
 	greaterThan := maxIntPtr(r.greaterThan, requirement.greaterThan)
 	lessThan := minIntPtr(r.lessThan, requirement.lessThan)
+	minValues := maxIntPtr(r.MinValues, requirement.MinValues)
 	if greaterThan != nil && lessThan != nil && *greaterThan >= *lessThan {
-		return NewRequirement(r.Key, v1.NodeSelectorOpDoesNotExist)
+		return NewRequirementWithFlexibility(r.Key, v1.NodeSelectorOpDoesNotExist, minValues)
 	}
 
 	// Values
@@ -175,8 +182,7 @@ func (r *Requirement) Intersection(requirement *Requirement) *Requirement {
 	if !complement {
 		greaterThan, lessThan = nil, nil
 	}
-
-	return &Requirement{Key: r.Key, values: values, complement: complement, greaterThan: greaterThan, lessThan: lessThan, MinValues: maxIntPtr(r.MinValues, requirement.MinValues)}
+	return &Requirement{Key: r.Key, values: values, complement: complement, greaterThan: greaterThan, lessThan: lessThan, MinValues: minValues}
 }
 
 func (r *Requirement) Any() string {
