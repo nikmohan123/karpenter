@@ -54,8 +54,14 @@ type NodeClaimSpec struct {
 	NodeClassRef *NodeClassReference `json:"nodeClassRef"`
 }
 
+// NodeSelectorRequirementWithFlexibility introduces flexibility to the NodeSelectorRequirement through minValues
+// which represents the minimum number of unique values that needs to be considered for a particular requirement.
 type NodeSelectorRequirementWithFlexibility struct {
-	v1.NodeSelectorRequirement
+	v1.NodeSelectorRequirement `json:",inline"`
+	// MinValues is the minimum number of unique values required to define the flexibility of the specific requirement.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=100
+	// +optional
 	MinValues *int `json:"minValues,omitempty"`
 }
 

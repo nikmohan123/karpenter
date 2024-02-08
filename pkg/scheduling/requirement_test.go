@@ -25,6 +25,7 @@ import (
 	"github.com/samber/lo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+
 	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 )
 
