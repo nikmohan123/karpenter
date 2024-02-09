@@ -169,7 +169,7 @@ var _ = Describe("Validation", func() {
 				Expect(nodeClaim.Validate(ctx)).ToNot(Succeed())
 			}
 		})
-		It("should error when minValues is greater than the values specified within In operator", func() {
+		It("should error when minValues is greater than the number of unique values specified within In operator", func() {
 			nodeClaim.Spec.Requirements = []NodeSelectorRequirementWithFlexibility{
 				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(2)},
 			}

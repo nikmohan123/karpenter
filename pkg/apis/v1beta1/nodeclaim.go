@@ -58,6 +58,7 @@ type NodeClaimSpec struct {
 // which represents the minimum number of unique values that needs to be considered for a particular requirement.
 type NodeSelectorRequirementWithFlexibility struct {
 	v1.NodeSelectorRequirement `json:",inline"`
+	// This is an alpha field.
 	// MinValues is the minimum number of unique values required to define the flexibility of the specific requirement.
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=100

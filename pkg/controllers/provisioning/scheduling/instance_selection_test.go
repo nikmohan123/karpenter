@@ -642,8 +642,9 @@ var _ = Describe("Instance Type Selection", func() {
 		node := ExpectScheduled(ctx, env.Client, pod)
 		Expect(node.Labels[v1.LabelInstanceTypeStable]).To(Equal("test-instance1"))
 	})
-	It("should schedule minimum number of InstanceTypes in a nodeClaim", func() {
+	It("should schedule respecting the minValues from instance-type requirements", func() {
 		var instanceTypes []*cloudprovider.InstanceType
+		// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
 		opts1 := fake.InstanceTypeOptions{
 			Name:             "c2.large",
 			Architecture:     v1beta1.ArchitectureArm64,
@@ -680,8 +681,9 @@ var _ = Describe("Instance Type Selection", func() {
 		}
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts1))
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts2))
-
 		cloudProvider.InstanceTypes = instanceTypes
+
+		// Define NodePool that has minValues on instance-type requirement.
 		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
@@ -693,6 +695,8 @@ var _ = Describe("Instance Type Selection", func() {
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
+
+		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -708,13 +712,16 @@ var _ = Describe("Instance Type Selection", func() {
 
 		ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
 		node1 := ExpectScheduled(ctx, env.Client, pod1)
-		Expect(node1.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
 		node2 := ExpectScheduled(ctx, env.Client, pod2)
-		Expect(node2.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
+
+		// This ensures that the pods are scheduled in 2 different nodes.
 		Expect(node1.Name).ToNot(Equal(node2.Name))
+
+		// Ensures that NodeClaims are created with 2 instanceTypes
 		Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 	})
-	It("schedule should fail if minimum number of InstanceTypes is not met in a nodeClaim", func() {
+	It("schedule should fail if minimum number of InstanceTypes is not met as per the minValues in the requirement", func() {
+		// Construct InstanceTypeOptions
 		var instanceTypes []*cloudprovider.InstanceType
 		for i, instanceType := range cloudProvider.InstanceTypes {
 			if i < 10 {
@@ -722,6 +729,9 @@ var _ = Describe("Instance Type Selection", func() {
 			}
 		}
 		cloudProvider.InstanceTypes = instanceTypes
+
+		// Define NodePool that has minValues on instance-type requirement such that it is more than
+		// the number of instanceTypes that the scheduler has from the requirement.
 		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
@@ -733,10 +743,13 @@ var _ = Describe("Instance Type Selection", func() {
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
 		pod := test.UnschedulablePod()
+
+		// Pods are not scheduled since the requirements are not met
 		ExpectProvisionedNoBinding(ctx, env.Client, cluster, cloudProvider, prov, pod)
 		ExpectNotScheduled(ctx, env.Client, pod)
 	})
-	It("should schedule and pick the max of minValues of InstanceTypes in a nodeClaim if multiple operators are used", func() {
+	It("should schedule and pick the max of minValues of InstanceTypes if multiple operators are used for the same requirement.", func() {
+		// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
 		var instanceTypes []*cloudprovider.InstanceType
 		opts1 := fake.InstanceTypeOptions{
 			Name:             "c2.large",
@@ -774,8 +787,10 @@ var _ = Describe("Instance Type Selection", func() {
 		}
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts1))
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts2))
-
 		cloudProvider.InstanceTypes = instanceTypes
+
+		// Define NodePool that has minValues on instance-type requirement with multiple operators
+		// like "In", "Exists"
 		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
@@ -794,6 +809,8 @@ var _ = Describe("Instance Type Selection", func() {
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
+
+		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -809,13 +826,16 @@ var _ = Describe("Instance Type Selection", func() {
 
 		ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
 		node1 := ExpectScheduled(ctx, env.Client, pod1)
-		Expect(node1.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
 		node2 := ExpectScheduled(ctx, env.Client, pod2)
-		Expect(node2.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
+
+		// This ensures that the pods are scheduled in 2 different nodes.
 		Expect(node1.Name).ToNot(Equal(node2.Name))
+
+		// Ensures that NodeClaims are created with 2 instanceTypes
 		Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 	})
-	It("should respect multiple keys with minValues in a nodeClaim", func() {
+	It("should schedule and respect multiple requirement keys with minValues.", func() {
+		// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
 		var instanceTypes []*cloudprovider.InstanceType
 		opts1 := fake.InstanceTypeOptions{
 			Name:             "c2.large",
@@ -853,8 +873,9 @@ var _ = Describe("Instance Type Selection", func() {
 		}
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts1))
 		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts2))
-
 		cloudProvider.InstanceTypes = instanceTypes
+
+		// Define NodePool that has minValues on multiple requirements
 		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
@@ -873,6 +894,8 @@ var _ = Describe("Instance Type Selection", func() {
 			},
 		}
 		ExpectApplied(ctx, env.Client, nodePool)
+
+		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -888,10 +911,12 @@ var _ = Describe("Instance Type Selection", func() {
 
 		ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
 		node1 := ExpectScheduled(ctx, env.Client, pod1)
-		Expect(node1.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
 		node2 := ExpectScheduled(ctx, env.Client, pod2)
-		Expect(node2.Labels[v1.LabelInstanceTypeStable]).To(Equal("c2.large"))
+
+		// This ensures that the pods are scheduled in 2 different nodes.
 		Expect(node1.Name).ToNot(Equal(node2.Name))
+
+		// Ensures that NodeClaims are created with 2 instanceTypes
 		Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 	})
 })

@@ -52,6 +52,7 @@ func NewNodeSelectorRequirements(requirements ...v1beta1.NodeSelectorRequirement
 	return r
 }
 
+// ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility converts the NodeSelectorRequirement to NodeSelectorRequirementWithFlexibility
 func ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(requirements ...v1.NodeSelectorRequirement) []v1beta1.NodeSelectorRequirementWithFlexibility {
 	var nodeSelectorRequirementWithFlexibility []v1beta1.NodeSelectorRequirementWithFlexibility
 	for _, req := range requirements {

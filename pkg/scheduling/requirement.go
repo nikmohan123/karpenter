@@ -39,6 +39,8 @@ type Requirement struct {
 	MinValues   *int
 }
 
+// NewRequirementWithFlexibility constructs new requirement from the combination of key, values, minValues and the operator that
+// connects the keys and values.
 func NewRequirementWithFlexibility(key string, operator v1.NodeSelectorOperator, minValues *int, values ...string) *Requirement {
 	if normalized, ok := v1beta1.NormalizedLabels[key]; ok {
 		key = normalized
