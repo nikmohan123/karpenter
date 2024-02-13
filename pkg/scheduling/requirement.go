@@ -259,6 +259,9 @@ func (r *Requirement) String() string {
 	if r.lessThan != nil {
 		s += fmt.Sprintf(" <%d", *r.lessThan)
 	}
+	if r.MinValues != nil {
+		s += fmt.Sprintf(" minValues %d", *r.MinValues)
+	}
 	return s
 }
 
