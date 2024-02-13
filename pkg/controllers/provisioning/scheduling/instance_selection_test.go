@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/karpenter/pkg/apis/v1beta1"
 	"sigs.k8s.io/karpenter/pkg/cloudprovider"
 	"sigs.k8s.io/karpenter/pkg/cloudprovider/fake"
+	"sigs.k8s.io/karpenter/pkg/controllers/provisioning/scheduling"
 	"sigs.k8s.io/karpenter/pkg/test"
 	. "sigs.k8s.io/karpenter/pkg/test/expectations"
 	"sigs.k8s.io/karpenter/pkg/utils/resources"
@@ -747,6 +748,82 @@ var _ = Describe("Instance Type Selection", func() {
 		// Pods are not scheduled since the requirements are not met
 		ExpectProvisionedNoBinding(ctx, env.Client, cluster, cloudProvider, prov, pod)
 		ExpectNotScheduled(ctx, env.Client, pod)
+	})
+	It("schedule should fail if minimum number of InstanceTypes is not met as per the minValues in the requirement after truncation", func() {
+		var instanceTypes []*cloudprovider.InstanceType
+		// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
+		opts1 := fake.InstanceTypeOptions{
+			Name:             "c2.large",
+			Architecture:     v1beta1.ArchitectureArm64,
+			OperatingSystems: sets.New(string(v1.Linux)),
+			Resources: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("1"),
+				v1.ResourceMemory: resource.MustParse("1Gi"),
+			},
+		}
+		opts1.Offerings = []cloudprovider.Offering{
+			{
+				CapacityType: v1beta1.CapacityTypeSpot,
+				Zone:         "test-zone-1-spot",
+				Price:        0.52,
+				Available:    true,
+			},
+		}
+		opts2 := fake.InstanceTypeOptions{
+			Name:             "c4.large",
+			Architecture:     v1beta1.ArchitectureArm64,
+			OperatingSystems: sets.New(string(v1.Linux)),
+			Resources: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("4"),
+				v1.ResourceMemory: resource.MustParse("4Gi"),
+			},
+		}
+		opts2.Offerings = []cloudprovider.Offering{
+			{
+				CapacityType: v1beta1.CapacityTypeSpot,
+				Zone:         "test-zone-1-spot",
+				Price:        1.0,
+				Available:    true,
+			},
+		}
+		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts1))
+		instanceTypes = append(instanceTypes, fake.NewInstanceType(opts2))
+		// We have the required InstanceTypes that meet the minValues requirement.
+		cloudProvider.InstanceTypes = instanceTypes
+		// The truncation is changed from the default 100 to 1 for the ease of testing.
+		// This will truncate the 2 InstanceTypes to 1 resulting in breaking the minValue requirement and hence should fail the scheduling.
+		scheduling.MaxInstanceTypes = 1
+
+		// Define NodePool that has minValues on instance-type requirement.
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			{
+				NodeSelectorRequirement: v1.NodeSelectorRequirement{
+					Key:      v1.LabelInstanceTypeStable,
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"c2.large", "c4.large"},
+				},
+				MinValues: lo.ToPtr(2),
+			},
+		}
+		ExpectApplied(ctx, env.Client, nodePool)
+
+		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
+		pod1 := test.UnschedulablePod(test.PodOptions{
+			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("0.9"),
+				v1.ResourceMemory: resource.MustParse("0.9Gi")},
+			},
+		})
+		pod2 := test.UnschedulablePod(test.PodOptions{
+			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("0.9"),
+				v1.ResourceMemory: resource.MustParse("0.9Gi")},
+			},
+		})
+		// Pods are not scheduled since the requirements are not met
+		ExpectProvisionedNoBinding(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
+		ExpectNotScheduled(ctx, env.Client, pod1)
+		ExpectNotScheduled(ctx, env.Client, pod2)
 	})
 	It("should schedule and pick the max of minValues of InstanceTypes if multiple operators are used for the same requirement.", func() {
 		// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.

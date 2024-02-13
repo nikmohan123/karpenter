@@ -30,7 +30,9 @@ import (
 	"sigs.k8s.io/karpenter/pkg/scheduling"
 )
 
-const MaxInstanceTypes = 100
+// MaxInstanceTypes is a constant that restricts the number of instance types to be sent for launch. Note that this
+// is intentionally changed to var just to help in testing the code.
+var MaxInstanceTypes = 100
 
 // NodeClaimTemplate encapsulates the fields required to create a node and mirrors
 // the fields in NodePool. These structs are maintained separately in order
