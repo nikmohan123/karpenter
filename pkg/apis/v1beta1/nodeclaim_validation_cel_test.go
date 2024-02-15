@@ -187,9 +187,9 @@ var _ = Describe("Validation", func() {
 			}
 			Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 		})
-		It("should error when minValues is more than 100", func() {
+		It("should error when minValues is more than 50", func() {
 			nodeClaim.Spec.Requirements = []NodeSelectorRequirementWithFlexibility{
-				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(101)},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(51)},
 			}
 			Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 		})
