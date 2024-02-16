@@ -75,7 +75,7 @@ var _ = Describe("Drift", func() {
 		})
 		It("should pass-through the correct drifted type value through the karpenter_nodeclaims_drifted metric", func() {
 			cp.Drifted = "drifted"
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelInstanceTypeStable,
@@ -135,7 +135,7 @@ var _ = Describe("Drift", func() {
 	})
 	It("should detect node requirement drift before cloud provider drift", func() {
 		cp.Drifted = "drifted"
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelInstanceTypeStable,
@@ -216,7 +216,7 @@ var _ = Describe("Drift", func() {
 	})
 	Context("NodeRequirement Drift", func() {
 		DescribeTable("",
-			func(oldNodePoolReq []v1beta1.NodeSelectorRequirementWithFlexibility, newNodePoolReq []v1beta1.NodeSelectorRequirementWithFlexibility, labels map[string]string, drifted bool) {
+			func(oldNodePoolReq []v1beta1.NodeSelectorRequirementWithMinValues, newNodePoolReq []v1beta1.NodeSelectorRequirementWithMinValues, labels map[string]string, drifted bool) {
 				cp.Drifted = ""
 				nodePool.Spec.Template.Spec.Requirements = oldNodePoolReq
 				nodeClaim.Labels = lo.Assign(nodeClaim.Labels, labels)
@@ -238,12 +238,12 @@ var _ = Describe("Drift", func() {
 			},
 			Entry(
 				"should return drifted if the nodePool node requirement is updated",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelArchStable, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.ArchitectureAmd64}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeSpot}}},
 				},
 				map[string]string{
@@ -254,11 +254,11 @@ var _ = Describe("Drift", func() {
 				true),
 			Entry(
 				"should return drifted if a new node requirement is added",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelArchStable, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.ArchitectureAmd64}}},
@@ -271,11 +271,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should return drifted if a node requirement is reduced",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux), string(v1.Windows)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Windows)}}},
 				},
@@ -287,11 +287,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should not return drifted if a node requirement is expanded",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux), string(v1.Windows)}}},
 				},
@@ -303,11 +303,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should not return drifted if a node requirement set to Exists",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpExists, Values: []string{}}},
 				},
@@ -319,11 +319,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should return drifted if a node requirement set to DoesNotExists",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpDoesNotExist, Values: []string{}}},
 				},
@@ -335,11 +335,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should not return drifted if a nodeClaim is grater then node requirement",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpGt, Values: []string{"2"}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpGt, Values: []string{"10"}}},
 				},
@@ -351,11 +351,11 @@ var _ = Describe("Drift", func() {
 			),
 			Entry(
 				"should not return drifted if a nodeClaim is less then node requirement",
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpLt, Values: []string{"5"}}},
 				},
-				[]v1beta1.NodeSelectorRequirementWithFlexibility{
+				[]v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpLt, Values: []string{"1"}}},
 				},
@@ -368,7 +368,7 @@ var _ = Describe("Drift", func() {
 		)
 		It("should return drifted only on NodeClaims that are drifted from an updated nodePool", func() {
 			cp.Drifted = ""
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux), string(v1.Windows)}}},
 			}
@@ -403,7 +403,7 @@ var _ = Describe("Drift", func() {
 			Expect(nodeClaimTwo.StatusConditions().GetCondition(v1beta1.Drifted)).To(BeNil())
 
 			// Removed Windows OS
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1beta1.CapacityTypeLabelKey, Operator: v1.NodeSelectorOpIn, Values: []string{v1beta1.CapacityTypeOnDemand}}},
 				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelOSStable, Operator: v1.NodeSelectorOpIn, Values: []string{string(v1.Linux)}}},
 			}

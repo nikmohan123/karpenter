@@ -36,9 +36,10 @@ type NodeClaimSpec struct {
 	// Requirements are layered with GetLabels and applied to every node.
 	// +kubebuilder:validation:XValidation:message="requirements with operator 'In' must have a value defined",rule="self.all(x, x.operator == 'In' ? x.values.size() != 0 : true)"
 	// +kubebuilder:validation:XValidation:message="requirements operator 'Gt' or 'Lt' must have a single positive integer value",rule="self.all(x, (x.operator == 'Gt' || x.operator == 'Lt') ? (x.values.size() == 1 && int(x.values[0]) >= 0) : true)"
+	// +kubebuilder:validation:XValidation:message="requirements with 'minValues' must have minimum values defined",rule="self.all(x, (x.operator == 'In' && has(x.minValues)) ? x.values.size() >= x.minValues : true)"
 	// +kubebuilder:validation:MaxItems:=30
 	// +required
-	Requirements []NodeSelectorRequirementWithFlexibility `json:"requirements" hash:"ignore"`
+	Requirements []NodeSelectorRequirementWithMinValues `json:"requirements" hash:"ignore"`
 	// Resources models the resource requirements for the NodeClaim to launch
 	// +optional
 	Resources ResourceRequirements `json:"resources,omitempty" hash:"ignore"`
@@ -54,11 +55,11 @@ type NodeClaimSpec struct {
 	NodeClassRef *NodeClassReference `json:"nodeClassRef"`
 }
 
-// NodeSelectorRequirementWithFlexibility introduces flexibility to the NodeSelectorRequirement through minValues
+// NodeSelectorRequirementWithMinValues introduces flexibility to the NodeSelectorRequirement through minValues
 // which represents the minimum number of unique values that needs to be considered for a particular requirement.
-type NodeSelectorRequirementWithFlexibility struct {
+type NodeSelectorRequirementWithMinValues struct {
 	v1.NodeSelectorRequirement `json:",inline"`
-	// This is an alpha field.
+	// This field is ALPHA and can be dropped or replaced at any time
 	// MinValues is the minimum number of unique values required to define the flexibility of the specific requirement.
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:Maximum:=50

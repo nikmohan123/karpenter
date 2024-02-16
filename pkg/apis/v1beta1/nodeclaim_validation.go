@@ -141,7 +141,7 @@ func (in *NodeClaimSpec) validateRequirements() (errs *apis.FieldError) {
 	return errs
 }
 
-func ValidateRequirement(requirement NodeSelectorRequirementWithFlexibility) error { //nolint:gocyclo
+func ValidateRequirement(requirement NodeSelectorRequirementWithMinValues) error { //nolint:gocyclo
 	var errs error
 	if normalized, ok := NormalizedLabels[requirement.Key]; ok {
 		requirement.Key = normalized

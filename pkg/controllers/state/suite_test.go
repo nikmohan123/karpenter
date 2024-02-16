@@ -832,7 +832,7 @@ var _ = Describe("Node Resource Level", func() {
 				Finalizers: []string{v1beta1.TerminationFinalizer},
 			},
 			Spec: v1beta1.NodeClaimSpec{
-				Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{
+				Requirements: []v1beta1.NodeSelectorRequirementWithMinValues{
 					{
 						NodeSelectorRequirement: v1.NodeSelectorRequirement{
 							Key:      v1.LabelInstanceTypeStable,

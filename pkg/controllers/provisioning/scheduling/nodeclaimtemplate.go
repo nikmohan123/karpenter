@@ -51,7 +51,7 @@ func NewNodeClaimTemplate(nodePool *v1beta1.NodePool) *NodeClaimTemplate {
 		Requirements:      scheduling.NewRequirements(),
 	}
 	nct.Labels = lo.Assign(nct.Labels, map[string]string{v1beta1.NodePoolLabelKey: nodePool.Name})
-	nct.Requirements.Add(scheduling.NewNodeSelectorRequirements(nct.Spec.Requirements...).Values()...)
+	nct.Requirements.Add(scheduling.NewNodeSelectorRequirementsWithMinValues(nct.Spec.Requirements...).Values()...)
 	nct.Requirements.Add(scheduling.NewLabelRequirements(nct.Labels).Values()...)
 	return nct
 }

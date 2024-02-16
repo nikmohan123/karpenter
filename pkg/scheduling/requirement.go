@@ -87,10 +87,10 @@ func NewRequirement(key string, operator v1.NodeSelectorOperator, values ...stri
 	return NewRequirementWithFlexibility(key, operator, nil, values...)
 }
 
-func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementWithFlexibility {
+func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementWithMinValues {
 	switch {
 	case r.greaterThan != nil:
-		return v1beta1.NodeSelectorRequirementWithFlexibility{
+		return v1beta1.NodeSelectorRequirementWithMinValues{
 			NodeSelectorRequirement: v1.NodeSelectorRequirement{
 				Key:      r.Key,
 				Operator: v1.NodeSelectorOpGt,
@@ -99,7 +99,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 			MinValues: r.MinValues,
 		}
 	case r.lessThan != nil:
-		return v1beta1.NodeSelectorRequirementWithFlexibility{
+		return v1beta1.NodeSelectorRequirementWithMinValues{
 			NodeSelectorRequirement: v1.NodeSelectorRequirement{
 				Key:      r.Key,
 				Operator: v1.NodeSelectorOpLt,
@@ -110,7 +110,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 	case r.complement:
 		switch {
 		case len(r.values) > 0:
-			return v1beta1.NodeSelectorRequirementWithFlexibility{
+			return v1beta1.NodeSelectorRequirementWithMinValues{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpNotIn,
@@ -119,7 +119,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 				MinValues: r.MinValues,
 			}
 		default:
-			return v1beta1.NodeSelectorRequirementWithFlexibility{
+			return v1beta1.NodeSelectorRequirementWithMinValues{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpExists,
@@ -130,7 +130,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 	default:
 		switch {
 		case len(r.values) > 0:
-			return v1beta1.NodeSelectorRequirementWithFlexibility{
+			return v1beta1.NodeSelectorRequirementWithMinValues{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpIn,
@@ -139,7 +139,7 @@ func (r *Requirement) NodeSelectorRequirement() v1beta1.NodeSelectorRequirementW
 				MinValues: r.MinValues,
 			}
 		default:
-			return v1beta1.NodeSelectorRequirementWithFlexibility{
+			return v1beta1.NodeSelectorRequirementWithMinValues{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      r.Key,
 					Operator: v1.NodeSelectorOpDoesNotExist,

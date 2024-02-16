@@ -51,7 +51,7 @@ var _ = Describe("Instance Type Selection", func() {
 			Spec: v1beta1.NodePoolSpec{
 				Template: v1beta1.NodeClaimTemplate{
 					Spec: v1beta1.NodeClaimSpec{
-						Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{
+						Requirements: []v1beta1.NodeSelectorRequirementWithMinValues{
 							{
 								NodeSelectorRequirement: v1.NodeSelectorRequirement{
 									Key:      v1beta1.CapacityTypeLabelKey,
@@ -120,7 +120,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureArm64)
 	})
 	It("should schedule on one of the cheapest instances (prov arch = amd64)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -137,7 +137,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureAmd64)
 	})
 	It("should schedule on one of the cheapest instances (prov arch = arm64)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -154,7 +154,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, v1beta1.ArchitectureArm64)
 	})
 	It("should schedule on one of the cheapest instances (prov os = windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelOSStable,
@@ -184,7 +184,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelOSStable, string(v1.Windows))
 	})
 	It("should schedule on one of the cheapest instances (prov os = windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelOSStable,
@@ -227,7 +227,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelOSStable, string(v1.Linux))
 	})
 	It("should schedule on one of the cheapest instances (prov zone = test-zone-2)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelTopologyZone,
@@ -257,7 +257,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelTopologyZone, "test-zone-2")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = spot)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1beta1.CapacityTypeLabelKey,
@@ -287,7 +287,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeLabelKey, v1beta1.CapacityTypeSpot)
 	})
 	It("should schedule on one of the cheapest instances (prov ct = ondemand, prov zone = test-zone-1)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1beta1.CapacityTypeLabelKey,
@@ -330,7 +330,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithOffering(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeSpot, "test-zone-1")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = spot, pod zone = test-zone-2)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1beta1.CapacityTypeLabelKey,
@@ -352,7 +352,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithOffering(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1beta1.CapacityTypeSpot, "test-zone-2")
 	})
 	It("should schedule on one of the cheapest instances (prov ct = ondemand/test-zone-1/arm64/windows)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -392,7 +392,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectInstancesWithLabel(supportedInstanceTypes(cloudProvider.CreateCalls[0]), v1.LabelArchStable, "arm64")
 	})
 	It("should schedule on one of the cheapest instances (prov = spot/test-zone-2, pod = amd64/linux)", func() {
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -521,7 +521,7 @@ var _ = Describe("Instance Type Selection", func() {
 			return true
 		})
 
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -627,7 +627,7 @@ var _ = Describe("Instance Type Selection", func() {
 				},
 			}),
 		}
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1beta1.CapacityTypeLabelKey,
@@ -685,7 +685,7 @@ var _ = Describe("Instance Type Selection", func() {
 		cloudProvider.InstanceTypes = instanceTypes
 
 		// Define NodePool that has minValues on instance-type requirement.
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelInstanceTypeStable,
@@ -698,6 +698,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectApplied(ctx, env.Client, nodePool)
 
 		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
+		// Both of these should schedule on a c4.large without the minValues requirement being specified.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -733,7 +734,7 @@ var _ = Describe("Instance Type Selection", func() {
 
 		// Define NodePool that has minValues on instance-type requirement such that it is more than
 		// the number of instanceTypes that the scheduler has from the requirement.
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelInstanceTypeStable,
@@ -746,7 +747,7 @@ var _ = Describe("Instance Type Selection", func() {
 		pod := test.UnschedulablePod()
 
 		// Pods are not scheduled since the requirements are not met
-		ExpectProvisionedNoBinding(ctx, env.Client, cluster, cloudProvider, prov, pod)
+		ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod)
 		ExpectNotScheduled(ctx, env.Client, pod)
 	})
 	It("schedule should fail if minimum number of InstanceTypes is not met as per the minValues in the requirement after truncation", func() {
@@ -795,7 +796,7 @@ var _ = Describe("Instance Type Selection", func() {
 		scheduling.MaxInstanceTypes = 1
 
 		// Define NodePool that has minValues on instance-type requirement.
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelInstanceTypeStable,
@@ -808,6 +809,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectApplied(ctx, env.Client, nodePool)
 
 		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
+		// Both of these should schedule on a c4.large without the minValues requirement being specified.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -821,7 +823,7 @@ var _ = Describe("Instance Type Selection", func() {
 			},
 		})
 		// Pods are not scheduled since the requirements are not met
-		ExpectProvisionedNoBinding(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
+		ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
 		ExpectNotScheduled(ctx, env.Client, pod1)
 		ExpectNotScheduled(ctx, env.Client, pod2)
 	})
@@ -868,7 +870,7 @@ var _ = Describe("Instance Type Selection", func() {
 
 		// Define NodePool that has minValues on instance-type requirement with multiple operators
 		// like "In", "Exists"
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelInstanceTypeStable,
@@ -888,6 +890,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectApplied(ctx, env.Client, nodePool)
 
 		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
+		// Both of these should schedule on a c4.large without the minValues requirement being specified.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),
@@ -953,7 +956,7 @@ var _ = Describe("Instance Type Selection", func() {
 		cloudProvider.InstanceTypes = instanceTypes
 
 		// Define NodePool that has minValues on multiple requirements
-		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+		nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 			{
 				NodeSelectorRequirement: v1.NodeSelectorRequirement{
 					Key:      v1.LabelArchStable,
@@ -973,6 +976,7 @@ var _ = Describe("Instance Type Selection", func() {
 		ExpectApplied(ctx, env.Client, nodePool)
 
 		// 2 pods are created with resources such that both fit together only in one of the 2 InstanceTypes created above.
+		// Both of these should schedule on a c4.large without the minValues requirement being specified.
 		pod1 := test.UnschedulablePod(test.PodOptions{
 			ResourceRequirements: v1.ResourceRequirements{Requests: v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("0.9"),

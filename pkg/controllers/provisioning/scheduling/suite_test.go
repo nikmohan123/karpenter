@@ -118,7 +118,7 @@ var _ = Context("NodePool", func() {
 			Spec: v1beta1.NodePoolSpec{
 				Template: v1beta1.NodeClaimTemplate{
 					Spec: v1beta1.NodeClaimSpec{
-						Requirements: []v1beta1.NodeSelectorRequirementWithFlexibility{
+						Requirements: []v1beta1.NodeSelectorRequirementWithMinValues{
 							{
 								NodeSelectorRequirement: v1.NodeSelectorRequirement{
 									Key:      v1beta1.CapacityTypeLabelKey,
@@ -186,7 +186,7 @@ var _ = Context("NodePool", func() {
 		})
 		Context("Well Known Labels", func() {
 			It("should use NodePool constraints", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-2"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -195,7 +195,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(v1.LabelTopologyZone, "test-zone-2"))
 			})
 			It("should use node selectors", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1", "test-zone-2"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -214,7 +214,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule the pod if nodeselector unknown", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -224,7 +224,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule if node selector outside of NodePool constraints", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -245,7 +245,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(v1.LabelTopologyZone, "test-zone-3"))
 			})
 			It("should schedule compatible requirements with Operator=Gt", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: fake.IntegerInstanceLabelKey, Operator: v1.NodeSelectorOpGt, Values: []string{"8"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -254,7 +254,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(fake.IntegerInstanceLabelKey, "16"))
 			})
 			It("should schedule compatible requirements with Operator=Lt", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: fake.IntegerInstanceLabelKey, Operator: v1.NodeSelectorOpLt, Values: []string{"8"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -411,9 +411,9 @@ var _ = Context("NodePool", func() {
 				}
 			})
 			It("should schedule pods that have node selectors with label in restricted domains exceptions list", func() {
-				var requirements []v1beta1.NodeSelectorRequirementWithFlexibility
+				var requirements []v1beta1.NodeSelectorRequirementWithMinValues
 				for domain := range v1beta1.LabelDomainExceptions {
-					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
+					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithMinValues{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
 				}
 				nodePool.Spec.Template.Spec.Requirements = requirements
 				ExpectApplied(ctx, env.Client, nodePool)
@@ -425,9 +425,9 @@ var _ = Context("NodePool", func() {
 				}
 			})
 			It("should schedule pods that have node selectors with label in subdomain from restricted domains exceptions list", func() {
-				var requirements []v1beta1.NodeSelectorRequirementWithFlexibility
+				var requirements []v1beta1.NodeSelectorRequirementWithMinValues
 				for domain := range v1beta1.LabelDomainExceptions {
-					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "subdomain." + domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
+					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithMinValues{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "subdomain." + domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
 				}
 				nodePool.Spec.Template.Spec.Requirements = requirements
 				ExpectApplied(ctx, env.Client, nodePool)
@@ -498,7 +498,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).ToNot(HaveKey("test-key"))
 			})
 			It("should schedule unconstrained pods that don't have matching node selectors", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -507,7 +507,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should schedule pods that have node selectors with matching value and In operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -519,7 +519,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should not schedule pods that have node selectors with matching value and NotIn operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -530,7 +530,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should schedule the pod with Exists operator and defined key", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -542,7 +542,7 @@ var _ = Context("NodePool", func() {
 				ExpectScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule the pod with DoesNotExists operator and defined key", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -554,7 +554,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule pods that have node selectors with different value and In operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -565,7 +565,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should schedule pods that have node selectors with different value and NotIn operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -577,7 +577,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should schedule compatible pods to the same node", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value", "another-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pods := []*v1.Pod{
@@ -597,7 +597,7 @@ var _ = Context("NodePool", func() {
 				Expect(node1.Name).To(Equal(node2.Name))
 			})
 			It("should schedule incompatible pods to the different node", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value", "another-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pods := []*v1.Pod{
@@ -630,7 +630,7 @@ var _ = Context("NodePool", func() {
 		})
 		Context("Well Known Labels", func() {
 			It("should use NodePool constraints", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-2"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -639,7 +639,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(v1.LabelTopologyZone, "test-zone-2"))
 			})
 			It("should use node selectors", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1", "test-zone-2"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -658,7 +658,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule the pod if nodeselector unknown", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -668,7 +668,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule if node selector outside of NodePool constraints", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -689,7 +689,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(v1.LabelTopologyZone, "test-zone-3"))
 			})
 			It("should schedule compatible requirements with Operator=Gt", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: fake.IntegerInstanceLabelKey, Operator: v1.NodeSelectorOpGt, Values: []string{"8"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -698,7 +698,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue(fake.IntegerInstanceLabelKey, "16"))
 			})
 			It("should schedule compatible requirements with Operator=Lt", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: fake.IntegerInstanceLabelKey, Operator: v1.NodeSelectorOpLt, Values: []string{"8"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -855,9 +855,9 @@ var _ = Context("NodePool", func() {
 				}
 			})
 			It("should schedule pods that have node selectors with label in restricted domains exceptions list", func() {
-				var requirements []v1beta1.NodeSelectorRequirementWithFlexibility
+				var requirements []v1beta1.NodeSelectorRequirementWithMinValues
 				for domain := range v1beta1.LabelDomainExceptions {
-					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
+					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithMinValues{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
 				}
 				nodePool.Spec.Template.Spec.Requirements = requirements
 				ExpectApplied(ctx, env.Client, nodePool)
@@ -869,9 +869,9 @@ var _ = Context("NodePool", func() {
 				}
 			})
 			It("should schedule pods that have node selectors with label in subdomain from restricted domains exceptions list", func() {
-				var requirements []v1beta1.NodeSelectorRequirementWithFlexibility
+				var requirements []v1beta1.NodeSelectorRequirementWithMinValues
 				for domain := range v1beta1.LabelDomainExceptions {
-					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithFlexibility{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "subdomain." + domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
+					requirements = append(requirements, v1beta1.NodeSelectorRequirementWithMinValues{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "subdomain." + domain + "/test", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}})
 				}
 				nodePool.Spec.Template.Spec.Requirements = requirements
 				ExpectApplied(ctx, env.Client, nodePool)
@@ -942,7 +942,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).ToNot(HaveKey("test-key"))
 			})
 			It("should schedule unconstrained pods that don't have matching node selectors", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod()
@@ -951,7 +951,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should schedule pods that have node selectors with matching value and In operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -963,7 +963,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should not schedule pods that have node selectors with matching value and NotIn operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -974,7 +974,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should schedule the pod with Exists operator and defined key", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -986,7 +986,7 @@ var _ = Context("NodePool", func() {
 				ExpectScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule the pod with DoesNotExists operator and defined key", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -998,7 +998,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should not schedule pods that have node selectors with different value and In operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -1009,7 +1009,7 @@ var _ = Context("NodePool", func() {
 				ExpectNotScheduled(ctx, env.Client, pod)
 			})
 			It("should schedule pods that have node selectors with different value and NotIn operator", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pod := test.UnschedulablePod(
@@ -1021,7 +1021,7 @@ var _ = Context("NodePool", func() {
 				Expect(node.Labels).To(HaveKeyWithValue("test-key", "test-value"))
 			})
 			It("should schedule compatible pods to the same node", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value", "another-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pods := []*v1.Pod{
@@ -1041,7 +1041,7 @@ var _ = Context("NodePool", func() {
 				Expect(node1.Name).To(Equal(node2.Name))
 			})
 			It("should schedule incompatible pods to the different node", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: "test-key", Operator: v1.NodeSelectorOpIn, Values: []string{"test-value", "another-value"}}}}
 				ExpectApplied(ctx, env.Client, nodePool)
 				pods := []*v1.Pod{
@@ -1079,7 +1079,7 @@ var _ = Context("NodePool", func() {
 	Describe("Preferential Fallback", func() {
 		Context("Required", func() {
 			It("should not relax the final term", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1"}}},
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"default-instance-type"}}},
 				}
@@ -1138,7 +1138,7 @@ var _ = Context("NodePool", func() {
 				ExpectScheduled(ctx, env.Client, pod)
 			})
 			It("should relax to use lighter weights", func() {
-				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+				nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelTopologyZone, Operator: v1.NodeSelectorOpIn, Values: []string{"test-zone-1", "test-zone-2"}}}}
 				pod := test.UnschedulablePod()
 				pod.Spec.Affinity = &v1.Affinity{NodeAffinity: &v1.NodeAffinity{PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{
@@ -1210,7 +1210,7 @@ var _ = Context("NodePool", func() {
 			ExpectNotScheduled(ctx, env.Client, pod)
 		})
 		It("should launch pods with different archs on different instances", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1237,7 +1237,7 @@ var _ = Context("NodePool", func() {
 			Expect(nodeNames.Len()).To(Equal(2))
 		})
 		It("should exclude instance types that are not supported by the pod constraints (node affinity/instance type)", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1260,7 +1260,7 @@ var _ = Context("NodePool", func() {
 			ExpectNotScheduled(ctx, env.Client, pod)
 		})
 		It("should exclude instance types that are not supported by the pod constraints (node affinity/operating system)", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1284,7 +1284,7 @@ var _ = Context("NodePool", func() {
 			ExpectNotScheduled(ctx, env.Client, pod)
 		})
 		It("should exclude instance types that are not supported by the provider constraints (arch)", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1301,7 +1301,7 @@ var _ = Context("NodePool", func() {
 			ExpectNotScheduled(ctx, env.Client, pod)
 		})
 		It("should launch pods with different operating systems on different instances", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1328,7 +1328,7 @@ var _ = Context("NodePool", func() {
 			Expect(nodeNames.Len()).To(Equal(2))
 		})
 		It("should launch pods with different instance type node selectors on different instances", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1355,7 +1355,7 @@ var _ = Context("NodePool", func() {
 			Expect(nodeNames.Len()).To(Equal(2))
 		})
 		It("should launch pods with different zone selectors on different instances", func() {
-			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithFlexibility{
+			nodePool.Spec.Template.Spec.Requirements = []v1beta1.NodeSelectorRequirementWithMinValues{
 				{
 					NodeSelectorRequirement: v1.NodeSelectorRequirement{
 						Key:      v1.LabelArchStable,
@@ -1791,7 +1791,7 @@ var _ = Context("NodePool", func() {
 			// large is the cheapest, so we should pick it, but the other two types are also valid options
 			Expect(node.Labels[v1.LabelInstanceTypeStable]).To(Equal("large"))
 			// all three options should be passed to the cloud provider
-			possibleInstanceType := sets.NewString(pscheduling.NewNodeSelectorRequirements(cloudProvider.CreateCalls[0].Spec.Requirements...).Get(v1.LabelInstanceTypeStable).Values()...)
+			possibleInstanceType := sets.NewString(pscheduling.NewNodeSelectorRequirementsWithMinValues(cloudProvider.CreateCalls[0].Spec.Requirements...).Get(v1.LabelInstanceTypeStable).Values()...)
 			Expect(possibleInstanceType).To(Equal(sets.NewString("small", "medium", "large")))
 		})
 	})
@@ -3686,7 +3686,7 @@ func ExpectDeleteAllUnscheduledPods(ctx2 context.Context, c client.Client) {
 // Functions below this line are used for the instance type selection testing
 // -----------
 func supportedInstanceTypes(nodeClaim *v1beta1.NodeClaim) (res []*cloudprovider.InstanceType) {
-	reqs := pscheduling.NewNodeSelectorRequirements(nodeClaim.Spec.Requirements...)
+	reqs := pscheduling.NewNodeSelectorRequirementsWithMinValues(nodeClaim.Spec.Requirements...)
 	return lo.Filter(cloudProvider.InstanceTypes, func(i *cloudprovider.InstanceType, _ int) bool {
 		return reqs.Get(v1.LabelInstanceTypeStable).Has(i.Name)
 	})

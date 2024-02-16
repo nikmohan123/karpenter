@@ -43,7 +43,7 @@ func MakeTopologyNodeFilter(p *v1.Pod) TopologyNodeFilter {
 	for _, term := range p.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
 		requirements := scheduling.NewRequirements()
 		requirements.Add(nodeSelectorRequirements.Values()...)
-		requirements.Add(scheduling.NewNodeSelectorRequirements(scheduling.ConvertNodeSelectorRequirementToNodeSelectorRequirementWithFlexibility(term.MatchExpressions...)...).Values()...)
+		requirements.Add(scheduling.NewNodeSelectorRequirements(term.MatchExpressions...).Values()...)
 		filter = append(filter, requirements)
 	}
 
