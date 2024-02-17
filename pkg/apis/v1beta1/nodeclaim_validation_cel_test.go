@@ -196,7 +196,7 @@ var _ = Describe("Validation", func() {
 		})
 		It("should error when minValues is more than 50", func() {
 			nodeClaim.Spec.Requirements = []NodeSelectorRequirementWithMinValues{
-				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpExists, Values: []string{"insance-type-1"}}, MinValues: lo.ToPtr(51)},
+				{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpExists}, MinValues: lo.ToPtr(51)},
 			}
 			Expect(env.Client.Create(ctx, nodeClaim)).ToNot(Succeed())
 		})

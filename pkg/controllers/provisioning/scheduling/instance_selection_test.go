@@ -644,7 +644,7 @@ var _ = Describe("Instance Type Selection", func() {
 		node := ExpectScheduled(ctx, env.Client, pod)
 		Expect(node.Labels[v1.LabelInstanceTypeStable]).To(Equal("test-instance1"))
 	})
-	Context("Scheduler behavior for requirements with minValues", func() {
+	Context("MinValues", func() {
 		It("should schedule respecting the minValues from instance-type requirements", func() {
 			var instanceTypes []*cloudprovider.InstanceType
 			// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
