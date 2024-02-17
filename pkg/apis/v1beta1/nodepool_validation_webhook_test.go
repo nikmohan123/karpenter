@@ -376,7 +376,7 @@ var _ = Describe("Webhook/Validation", func() {
 			})
 			It("should error when minValues is greater than the number of unique values specified within In operator", func() {
 				nodePool.Spec.Template.Spec.Requirements = []NodeSelectorRequirementWithMinValues{
-					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"c4.large"}}, MinValues: lo.ToPtr(2)},
+					{NodeSelectorRequirement: v1.NodeSelectorRequirement{Key: v1.LabelInstanceTypeStable, Operator: v1.NodeSelectorOpIn, Values: []string{"insance-type-1"}}, MinValues: lo.ToPtr(2)},
 				}
 				Expect(nodePool.Validate(ctx)).ToNot(Succeed())
 			})

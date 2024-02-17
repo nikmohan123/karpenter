@@ -165,7 +165,7 @@ func ValidateRequirement(requirement NodeSelectorRequirementWithMinValues) error
 	}
 
 	if requirement.Operator == v1.NodeSelectorOpIn && requirement.MinValues != nil && len(requirement.Values) < lo.FromPtr(requirement.MinValues) {
-		errs = multierr.Append(errs, fmt.Errorf("key %s with operator %s must have at least minimum number of values defined", requirement.Key, requirement.Operator))
+		errs = multierr.Append(errs, fmt.Errorf("key %s with operator %s must have at least minimum number of values defined in 'values' field", requirement.Key, requirement.Operator))
 	}
 
 	if requirement.Operator == v1.NodeSelectorOpGt || requirement.Operator == v1.NodeSelectorOpLt {

@@ -152,6 +152,8 @@ var _ = Describe("Topology", func() {
 					MinValues: lo.ToPtr(2),
 				},
 			}
+			// We know that we have to select a value when we are using topologySpread, which directly constrains us down to 1 value,
+			// so asking for more than that 1 value on that key using minValues isn't possible for Karpenter to reason about today.
 			topology := []v1.TopologySpreadConstraint{{
 				TopologyKey:       v1.LabelTopologyZone,
 				WhenUnsatisfiable: v1.DoNotSchedule,
