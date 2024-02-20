@@ -724,7 +724,7 @@ var _ = Describe("Instance Type Selection", func() {
 			// Ensures that NodeClaims are created with 2 instanceTypes
 			Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 		})
-		It("should schedule respecting the minValues in Gt operator.", func() {
+		It("should schedule respecting the minValues in Gt operator", func() {
 			// custom key that will help us with numerical values to be used for Gt operator
 			instanceGeneration := "karpenter/numerical-value"
 			var instanceTypes []*cloudprovider.InstanceType
@@ -823,7 +823,7 @@ var _ = Describe("Instance Type Selection", func() {
 			// Ensures that NodeClaims are created with 2 instanceTypes
 			Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 		})
-		It("scheduler should fail if the minValues in Gt operator is not satisfied.", func() {
+		It("scheduler should fail if the minValues in Gt operator is not satisfied", func() {
 			// custom key that will help us with numerical values to be used for Gt operator
 			instanceGeneration := "karpenter/numerical-value"
 			var instanceTypes []*cloudprovider.InstanceType
@@ -892,11 +892,16 @@ var _ = Describe("Instance Type Selection", func() {
 				},
 			})
 
-			ExpectProvisioned(ctx, env.Client, cluster, cloudProvider, prov, pod1, pod2)
+			ExpectApplied(ctx, env.Client, pod1)
+			ExpectApplied(ctx, env.Client, pod2)
+			results, _ := prov.Schedule(ctx)
+			for _, v := range results.PodErrors {
+				Expect(v.Error()).To(ContainSubstring("minValues requirement is not met for karpenter/numerical-value"))
+			}
 			ExpectNotScheduled(ctx, env.Client, pod1)
 			ExpectNotScheduled(ctx, env.Client, pod2)
 		})
-		It("should schedule respecting the minValues in Lt operator.", func() {
+		It("should schedule respecting the minValues in Lt operator", func() {
 			// custom key that will help us with numerical values to be used for Lt operator
 			instanceGeneration := "karpenter/numerical-value"
 			var instanceTypes []*cloudprovider.InstanceType
@@ -994,7 +999,7 @@ var _ = Describe("Instance Type Selection", func() {
 			// Ensures that NodeClaims are created with 2 instanceTypes
 			Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 		})
-		It("scheduler should fail if the minValues in Lt operator is not satisfied.", func() {
+		It("scheduler should fail if the minValues in Lt operator is not satisfied", func() {
 			// custom key that will help us with numerical values to be used for Lt operator
 			instanceGeneration := "karpenter/numerical-value"
 			var instanceTypes []*cloudprovider.InstanceType
@@ -1485,7 +1490,7 @@ var _ = Describe("Instance Type Selection", func() {
 			// Ensures that NodeClaims are created with 2 instanceTypes
 			Expect(len(supportedInstanceTypes(cloudProvider.CreateCalls[0]))).To(BeNumerically(">=", 2))
 		})
-		It("should schedule and respect multiple requirement keys with minValues.", func() {
+		It("should schedule and respect multiple requirement keys with minValues", func() {
 			// Create fake InstanceTypeOptions where one instances can fit 2 pods and another one can fit only 1 pod.
 			var instanceTypes []*cloudprovider.InstanceType
 			opts1 := fake.InstanceTypeOptions{
